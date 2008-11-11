@@ -142,7 +142,7 @@ function uc_node_checkout_form_alter($form_id, &$form) {
         if (variable_get('uc_node_checkout_cart_titles', TRUE)) {
           if (node_access('update', $node)) {
             $title = l($item->title, 'node/'. $node->nid .'/edit', array(), 'destination=cart');
-  
+
             // Add the click to edit link to the title if necessary.
             if (variable_get('uc_node_checkout_click_to_edit', TRUE)) {
               $title .= ' '. theme('uc_cart_click_to_edit');
@@ -455,7 +455,7 @@ function uc_node_checkout_type_form_submit($form_id, $form_values) {
   // Save the restricted fields settings.
   $fields = array();
 
-  foreach ($form_values['restricted_fields'] as $key => $value) {
+  foreach ((array) $form_values['restricted_fields'] as $key => $value) {
     if ($value) {
       $fields[] = $key;
     }
