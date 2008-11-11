@@ -1,25 +1,30 @@
 <?php
+// $Id$
 
+/**
+ * Implementation of hook_install().
+ */
 function uc_node_checkout_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("CREATE TABLE {uc_node_checkout_types} (
-        type varchar(32) NOT NULL default '',
-        product_nid int NOT NULL default 0,
-        PRIMARY KEY (type)
-      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ;");
-    break;
-    case 'pgsql':
-      db_query("CREATE TABLE {uc_node_checkout_types} (
-        type varchar(32) NOT NULL default '',
-        product_nid integer NOT NULL default 0,
-        PRIMARY KEY (type)
-      );");
-    break;
-  }
+  // Create tables.
+  drupal_install_schema('uc_node_checkout');
+}
+/**
+ * Implementation of hook_uninstall().
+ */
+function uc_node_checkout_uninstall() {
+  // Remove tables.
+  drupal_uninstall_schema('uc_node_checkout');
 }
 
-function uc_node_checkout_uninstall() {
-  db_query("DROP TABLE {uc_node_checkout_types}");
+/**
+ * Implementation of hook_schema().
+ */
+function uc_node_checkout_schema() {
+  $schema['uc_node_checkout_types'] = array(
+    'fields' => array(
+      'type' => array('type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'default' => ''),
+      'product_nid' => array('type' => 'int', 'not null' => TRUE, 'default' => 0)
+    )
+  );
+  return $schema;
 }
