@@ -257,7 +257,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       // Remove restricted fields for users without access.
       $fields = variable_get('uc_node_checkout_'. $type .'_restrictions', array());
 
-      if (!empty($fields) && !user_access('edit '. $type .' content')) {
+      if (!empty($fields) && !user_access('edit any '. $type .' content')) {
         foreach ($fields as $field) {
           $form[$field]['#access'] = FALSE;
         }
@@ -341,7 +341,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     case 'view':
       // Skip this whole block of code if this settings isn't enabled.
       if (variable_get('uc_node_checkout_view_redirect', TRUE)) {
-        if ($product_nid = uc_node_checkout_product_map($node->type) && !user_access('edit '. $node->type .' content')) {
+        if ($product_nid = uc_node_checkout_product_map($node->type) && !user_access('edit any '. $node->type .' content')) {
           drupal_goto(variable_get('uc_add_item_redirect', 'cart'));
         }
       }
@@ -442,7 +442,7 @@ function uc_node_checkout_type_form(&$form_state, $type) {
 
   $form['disable_preview'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Disable the preview button for this node type for users without %access permission.', array('%access' => t('edit @type content', array('@type' => $type->type)))),
+    '#title' => t('Disable the preview button for this node type for users without %access permission.', array('%access' => t('edit any @type content', array('@type' => $type->type)))),
     '#description' => t('This setting is recommended when using the general node checkout redirections.'),
     '#default_value' => in_array('preview', $restrictions),
   );
