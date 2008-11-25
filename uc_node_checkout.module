@@ -193,6 +193,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
     }
 
     // Add a submit handler to check for removed products.
+    $form['update']['#submit'][] = 'uc_node_checkout_cart_view_submit';
     $form['#submit'][] = 'uc_node_checkout_cart_view_submit';
   }
 
@@ -246,6 +247,11 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             }
           }
         }
+
+        // If enabled, alter the submit button to say "Add to cart".
+        if (variable_get('uc_node_checkout_alter_node_submit_button', TRUE)) {
+          $form['buttons']['submit']['#value'] = t('Add to cart');
+        }
       }
 
       // Remove restricted fields for users without access.
@@ -258,7 +264,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       }
 
       // Redirect non-administrators to the shopping cart after edits.
-      if (variable_get('uc_node_checkout_submit_redirect', TRUE) && !user_access('edit '. $type .' content')) {
+      if (variable_get('uc_node_checkout_submit_redirect', TRUE) && !user_access('edit any '. $type .' content')) {
         $form['#redirect'] = variable_get('uc_add_item_redirect', 'cart');
       }
     }
@@ -293,16 +299,26 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     // Add the associated product to the cart when a node is created that should
     // be checked out.
     case 'insert':
+      // If this node type is mapped to a product...
       if ($product_nid = uc_node_checkout_product_map($node->type)) {
-        $data = array('nid' => $product_nid, 'node_checkout_nid' => $node->nid);
-        $extra = module_invoke_all('add_to_cart_data', array('nid' => $product_nid, 'qty' => 1));
+        // Load up the corresponding product so we can use the default add to
+        // cart quantity.
+        $product = node_load($product_nid);
+
+        // Make sure we add at least 1 to the cart.
+        if (empty($product->default_qty)) {
+          $product->default_qty = 1;
+        }
+
+        $data = array('nid' => $product_nid, 'node_checkout_nid' => intval($node->nid));
+        $extra = module_invoke_all('add_to_cart_data', array('nid' => $product_nid, 'qty' => $product->default_qty));
         foreach ($extra as $key => $value) {
           if (!isset($data[$key])) {
             $data[$key] = $value;
           }
         }
 
-        uc_cart_add_item($product_nid, 1, $data, NULL, FALSE, FALSE);
+        uc_cart_add_item($product_nid, $product->default_qty, $data, NULL, FALSE, FALSE);
       }
       break;
 
@@ -312,7 +328,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       // Skip this whole block of code if we're not supposed to delete orphans.
       if (variable_get('uc_node_checkout_delete_orphans', TRUE)) {
         if ($product_nid = uc_node_checkout_product_map($node->type)) {
-          db_query("DELETE FROM {uc_cart_products} WHERE data LIKE '%%\"node_checkout_nid\";i:%d%%'", $node->nid);
+          db_query("DELETE FROM {uc_cart_products} WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", $node->nid);
           if (db_affected_rows()) {
             // Display a message here if necessary.
           }
@@ -556,6 +572,11 @@ function uc_node_checkout_settings_form() {
   $form['display'] = array(
     '#type' => 'fieldset',
     '#title' => t('Display settings'),
+  );
+  $form['display']['uc_node_checkout_alter_node_submit_button'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Alter the node form submit button to say "Add to cart" when a node is being created.'),
+    '#default_value' => variable_get('uc_node_checkout_alter_node_submit_button', TRUE),
   );
   $form['display']['uc_node_checkout_cart_titles'] = array(
     '#type' => 'checkbox',
