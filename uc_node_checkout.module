@@ -8,19 +8,6 @@
  * Sponsored by Lullabot - http://www.lullabot.com
  */
 
-/**
- * Implementation of hook_theme().
- */
-function uc_node_theme() {
-  return array(
-    'uc_cart_click_to_edit' => array(
-      'arguments' => array(),
-    ),
-    'uc_node_cart_teaser' => array(
-      'arguments' => array('node' => NULL),
-    ),
-  );
-}
 
 /**
  * Implementation of hook_menu().
@@ -95,6 +82,20 @@ function uc_node_checkout_help($path, $arg) {
     case 'admin/store/settings/node-checkout':
       return t('The table represents products associated with node types on your site. If you want a node type to be governed by UC Node Checkout, simply click its edit link and specify which product node on your site should be added to the cart when a node of that type gets created.  Use the settings tab to adjust some extra behaviors and display settings of the module.');
   }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function uc_node_checkout_theme() {
+  return array(
+    'uc_cart_click_to_edit' => array(
+      'arguments' => array(),
+    ),
+    'uc_node_cart_teaser' => array(
+      'arguments' => array('node' => NULL),
+    ),
+  );
 }
 
 /**
@@ -175,7 +176,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
           $form['items'][$i]['title']['#value'] = $title;
         }
 
-        // Add the node teaser beneath the title if necessary.
+        // Add the node cart teaser beneath the title if necessary.
         if (variable_get('uc_node_cart_teaser', TRUE)) {
           if (variable_get('uc_node_order_product_teaser_override', FALSE)) {
             $teaser = '<ul class="uc-node-cart-teaser"><li>'
