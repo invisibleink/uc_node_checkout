@@ -1,0 +1,11 @@
+/* $Id$ */
+
+.ucnc-attributes {
+  border: solid 1px #bbb;
+  padding: 1em;
+}
+
+.ucnc-attributes-label {
+  font-weight: bold;
+}
+
