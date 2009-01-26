@@ -22,9 +22,58 @@ function uc_node_checkout_uninstall() {
 function uc_node_checkout_schema() {
   $schema['uc_node_checkout_types'] = array(
     'fields' => array(
-      'type' => array('type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'default' => ''),
-      'product_nid' => array('type' => 'int', 'not null' => TRUE, 'default' => 0)
-    )
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'product_nid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'node_view' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
   );
+
+  $schema['uc_node_checkout_order_products'] = array(
+    'fields' => array(
+      'nid' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'order_product_id' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+
   return $schema;
+}
+
+/**
+ * Implementation of hook_update_N().
+ */
+function uc_node_checkout_update_6100() {
+  $ret = array();
+
+  // Change the type column to a varchar(255).
+  // Add the node_view column.
+
+  // Add the second table.
+
+  return $ret;
 }
