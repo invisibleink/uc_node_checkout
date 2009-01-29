@@ -859,8 +859,3 @@ function uc_node_checkout_load_order_product($order_product_id) {
   return $products[$order_product_id];
 }
 
-// Allow the customer to select which associated product to use for the node.
-function uc_node_checkout_product_selection_form() {
-
-}
-
