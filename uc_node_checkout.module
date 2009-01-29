@@ -53,7 +53,23 @@ function uc_node_checkout_menu() {
     'file' => 'uc_node_checkout.admin.inc',
   );
 
+  $items['ucnc-select/%'] = array(
+    'title' => 'Product selection',
+    'description' => 'Product selection form for users creating node checkout governed nodes.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_node_checkout_product_select_form', 1),
+    'access callback' => 'uc_node_checkout_product_select_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
+}
+
+// Determines access to the product selection form for node types associated
+// with Views.
+function uc_node_checkout_product_select_access($type) {
+  return module_exists('views') ? user_access('create '. $type .' content') : FALSE;
 }
 
 function uc_node_checkout_type_load($arg) {
@@ -159,19 +175,16 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
   // Alters the product add to cart forms to redirect to the appropriate node
   // add form if enabled.
   if (strpos($form_id, 'add_to_cart_form') > 0 && variable_get('uc_node_checkout_add_to_cart_node_form', TRUE)) {
-    // Loop through the node checkout mappings.
-    foreach (uc_node_checkout_product_map() as $type => $value) {
-      // If the current product is mapped to a node type...
-      if ($form['nid']['#value'] == $value['nid']) {
-        // Store the node type in the form.
-        $form['node_type'] = array(
-          '#type' => 'value',
-          '#value' => $type,
-        );
+    // If a node type association exists for this product...
+    if ($type = uc_node_checkout_node_type_association($form['nid']['#value'])) {
+      // Store the node type in the form.
+      $form['node_type'] = array(
+        '#type' => 'hidden',
+        '#value' => $type,
+      );
 
-        // Change the submit handler to use the add to cart redirect handler.
-        $form['submit']['#submit'] = array('uc_node_checkout_add_to_cart_submit');
-      }
+      // Change the submit handler to use the add to cart redirect handler.
+      $form['submit']['#submit'] = array('uc_node_checkout_add_to_cart_submit');
     }
   }
 
@@ -252,11 +265,25 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
   // Alter the node forms for UC Node Checkout governed node types.
   foreach (uc_node_checkout_product_map() as $type => $value) {
     if ($form_id == $type .'_node_form') {
+      // Determine the product nid that will be added to the cart when this
+      // node is created.  First look for a single product node association.
+      if ($value['nid'] && !$value['view']) {
+        $product_nid = $value['nid'];
+      }
+      elseif ($_GET['product_nid']) {
+        // Otherwise look in the $_GET array.
+        $product_nid = $_GET['product_nid'];
+      }
+      elseif (empty($form['nid']['#value'])) {
+        // If none was found, we must ask the user to specify one.
+        drupal_goto('ucnc-select/'. $type);
+      }
+
       // If enabled, add attributes form to the top of the node form if the node
       // has not already been checked out.
       if (module_exists('uc_attribute') && empty($form['#node']->uc_order_product_id)) {
         // Load up any attribute elements for this node's form.
-        $attributes = _uc_attribute_alter_form(node_load($value['nid']));
+        $attributes = _uc_attribute_alter_form(node_load($product_nid));
 
         // If we got a result...
         if (!empty($attributes)) {
@@ -290,8 +317,6 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
       // For node add forms...
       if (empty($form['nid']['#value'])) {
-        $product_nid = $_GET['product_nid'];
-
         $form['ucnc_product_nid'] = array(
           '#type' => 'hidden',
           '#value' => $product_nid,
@@ -300,7 +325,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         // If specified, redirect anonymous customers to login.
         if (variable_get('uc_node_checkout_node_access', TRUE) && !$user->uid) {
           drupal_set_message(t('You must login or create a user account to continue.'));
-          $_SESSION['node_checkout_redirect'] = 'node/add/'. $type;
+          $_SESSION['node_checkout_redirect'] = 'node/add/'. str_replace('_', '-', $type);
           drupal_goto('user');
         }
         else {
@@ -372,7 +397,7 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   }
 
   // Redirect to the node add form.
-  $form['#redirect'] = array('node/add/'. $form_state['values']['node_type'], implode('&', $get));
+  $form['#redirect'] = array('node/add/'. str_replace('_', '-', $form_state['values']['node_type']), implode('&', $get));
 }
 
 // Submit handler for cart view form that deletes nodes when necessary.
@@ -386,6 +411,78 @@ function uc_node_checkout_cart_view_submit($form, &$form_state) {
       }
     }
   }
+}
+
+// For node types associated with Views, allows the customer to select the
+// associated product up front.
+function uc_node_checkout_product_select_form($form_state, $type) {
+  $form = array();
+  $options = array();
+
+  // Get the View from the settings.
+  $nc_map = uc_node_checkout_product_map($type);
+  list ($view_name, $view_display) = explode('|', $nc_map['view']);
+
+  // Attempt to load the View.
+  $view = views_get_view($view_name);
+
+  // If it didn't exist or the display isn't around any more...
+  if (!$view || !isset($view->display[$view_display])) {
+    // Redirect to the node add form if a product NID is associated.
+    if ($nc_map['nid']) {
+      drupal_goto('node/add/'. $type, 'product_nid='. $nc_map['nid']);
+    }
+    else {
+      // We're outta luck...
+      drupal_set_message(t('An error has occurred. Please contact an administrator about not being able to select a product to create this %type.', array('%type' => $type)), 'error');
+      return $form;
+    }
+  }
+
+  // Build the view for the selected display.
+  $view->build($view_display);
+  $result = db_query($view->build_info['query'], $view->build_info['query_args']);
+
+  // Loop through the query results and add options for the select list.
+  while ($node = db_fetch_object($result)) {
+    $options[$node->nid] = check_plain($node->node_title);
+  }
+
+  // If no nodes were found but a single nid was specified...
+  if (empty($options) && $nc_map['nid']) {
+    // Redirect to the node add form if a product NID is associated.
+    if ($nc_map['nid']) {
+      drupal_goto('node/add/'. $type, 'product_nid='. $nc_map['nid']);
+    }
+    else {
+      // We're outta luck...
+      drupal_set_message(t('An error has occurred. Please contact an administrator about not being able to select a product to create this %type.', array('%type' => $type)), 'error');
+      return $form;
+    }
+  }
+
+  $form['type'] = array(
+    '#type' => 'hidden',
+    '#value' => $type,
+  );
+
+  $form['product_nid'] = array(
+    '#type' => 'select',
+    '#title' => t('Product'),
+    '#description' => t('You must first select the product you wish to purchase through this form.'),
+    '#options' => $options,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  return $form;
+}
+
+function uc_node_checkout_product_select_form_submit($form, &$form_state) {
+  drupal_goto('node/add/'. $form_state['values']['type'], 'product_nid='. $form_state['values']['product_nid']);
 }
 
 /**
@@ -631,6 +728,54 @@ function uc_node_checkout_node_associated($node) {
   if ($nc_map = uc_node_checkout_product_map($node->type)) {
     if ($nc_map['nid'] || $nc_map['view']) {
       return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Determines whether or not a given product has a node type association.
+ *
+ * @param $product_nid
+ *   The product node nid to check.
+ * @return
+ *   The node type that this product is associated with or FALSE if none exists.
+ */
+function uc_node_checkout_node_type_association($product_nid) {
+  // Loop through all the node checkout associations.
+  foreach (uc_node_checkout_product_map() as $type => $value) {
+    // If a node type does not have a View associated with it and the product's
+    // nid matches the associated node nid, return this type.
+    if (empty($value['view']) && $value['nid'] == $product_nid) {
+      return $type;
+    }
+  }
+
+  // Start over and this time check the return values of the Views.
+  foreach (uc_node_checkout_product_map() as $type => $value) {
+    // If a View was specified...
+    if (!empty($value['view'])) {
+      list ($view_name, $view_display) = explode('|', $value['view']);
+
+      // Attempt to load the View.
+      $view = views_get_view($view_name);
+
+      // If the View and the specified display were found...
+      if ($view && isset($view->display[$view_display])) {
+
+        // Build the view for the selected display.
+        $view->build($view_display);
+        $result = db_query($view->build_info['query'], $view->build_info['query_args']);
+
+        // Loop through the query results and return the current node type if
+        // we find an nid match.
+        while ($node = db_fetch_object($result)) {
+          if ($node->nid == $product_nid) {
+            return $type;
+          }
+        }
+      }
     }
   }
 
