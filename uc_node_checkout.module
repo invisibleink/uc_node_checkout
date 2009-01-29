@@ -564,6 +564,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
           }
         }
       }
+      db_query("DELETE FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid);
       break;
 
     // When enabled, redirects users to their cart when they try to view a node
@@ -700,10 +701,10 @@ function uc_node_checkout_product_map($type = '') {
   // The only limitation here is that the static caching will have no effect
   // when this module is enabled but no associations have been made.
   if (empty($nc_map)) {
-    $result = db_query("SELECT type, product_nid, node_view FROM {uc_node_checkout_types}");
+    $result = db_query("SELECT node_type, product_nid, node_view FROM {uc_node_checkout_types}");
 
     while ($nc_type = db_fetch_array($result)) {
-      $nc_map[$nc_type['type']] = array('nid' => $nc_type['product_nid'], 'view' => $nc_type['node_view']);
+      $nc_map[$nc_type['node_type']] = array('nid' => $nc_type['product_nid'], 'view' => $nc_type['node_view']);
     }
   }
 
