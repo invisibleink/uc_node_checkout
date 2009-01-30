@@ -133,6 +133,23 @@ function uc_node_checkout_enable() {
 }
 
 /**
+ * Implementation of hook_exit().
+ */
+function uc_node_checkout_exit() {
+  global $base_root;
+
+  // Prevent node checkout pages from being cached.
+  $pages = array('node/add', 'ucnc-select');
+  $this_page = request_uri();
+  foreach ($pages as $page) {
+    if (strstr($this_page, $page) !== FALSE) {
+      cache_clear_all($base_root . $this_page, 'cache_page');
+      return;
+    }
+  }
+}
+
+/**
  * Implementation of hook_user().
  */
 function uc_node_checkout_user($op, &$edit, &$user, $category = NULL) {
@@ -174,7 +191,8 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
   // Alters the product add to cart forms to redirect to the appropriate node
   // add form if enabled.
-  if (strpos($form_id, 'add_to_cart_form') > 0 && variable_get('uc_node_checkout_add_to_cart_node_form', TRUE)) {
+  if (variable_get('uc_node_checkout_add_to_cart_node_form', TRUE) &&
+      (strpos($form_id, 'add_to_cart_form') > 0 || strpos($form_id, 'uc_catalog_buy_it_now_form_') === 0)) {
     // If a node type association exists for this product...
     if ($type = uc_node_checkout_node_type_association($form['nid']['#value'])) {
       // Store the node type in the form.
