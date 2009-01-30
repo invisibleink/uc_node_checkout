@@ -128,13 +128,13 @@ function uc_node_checkout_type_form(&$form_state, $type) {
 function uc_node_checkout_type_form_submit($form, &$form_state) {
   // Save the product node ID.
   if ($form_state['values']['product_nid'] || $form_state['values']['view']) {
-    db_query("UPDATE {uc_node_checkout_types} SET product_nid = %d, node_view = '%s' WHERE type = '%s'", $form_state['values']['product_nid'], $form_state['values']['view'], $form_state['values']['type']);
+    db_query("UPDATE {uc_node_checkout_types} SET product_nid = %d, node_view = '%s' WHERE node_type = '%s'", $form_state['values']['product_nid'], $form_state['values']['view'], $form_state['values']['type']);
     if (!db_affected_rows()) {
-      db_query("INSERT INTO {uc_node_checkout_types} (type, product_nid, node_view) VALUES ('%s', %d, '%s')", $form_state['values']['type'], $form_state['values']['product_nid'], $form_state['values']['view']);
+      db_query("INSERT INTO {uc_node_checkout_types} (node_type, product_nid, node_view) VALUES ('%s', %d, '%s')", $form_state['values']['type'], $form_state['values']['product_nid'], $form_state['values']['view']);
     }
   }
   else {
-    db_query("DELETE FROM {uc_node_checkout_types} WHERE type = '%s'", $form_state['values']['type']);
+    db_query("DELETE FROM {uc_node_checkout_types} WHERE node_type = '%s'", $form_state['values']['type']);
   }
 
   // Save the restricted fields settings.
