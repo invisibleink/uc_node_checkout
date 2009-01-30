@@ -41,7 +41,7 @@ function uc_node_checkout_schema() {
       ),
     ),
     'indexes' => array(
-      'type' => array('type'),
+      'node_type' => array('node_type'),
     ),
   );
 
