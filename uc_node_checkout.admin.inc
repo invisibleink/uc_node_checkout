@@ -297,9 +297,9 @@ function uc_node_checkout_autocomplete($string = '') {
   $matches = array();
 
   if ($string) {
-    $result = db_query_range("SELECT nid, title FROM {node} WHERE LOWER(title) LIKE LOWER('%s%%')", $string, 0, 10);
+    $result = db_query_range("SELECT n.nid, n.title, p.model, p.unique_hash FROM {uc_products} AS p LEFT JOIN {node} AS n ON n.nid = p.nid WHERE p.unique_hash != '' AND (LOWER(n.title) LIKE '%s%%' OR LOWER(p.model) LIKE '%s%%')", strtolower($string), strtolower($string), 0, 10);
     while ($node = db_fetch_object($result)) {
-      $matches[$node->nid] = check_plain($node->title);
+      $matches[$node->nid] = t('@title [@sku]', array('@title' => $node->title, '@sku' => $node->model));
     }
   }
 
