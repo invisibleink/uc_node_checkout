@@ -304,6 +304,14 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         drupal_goto('ucnc-select/'. $type);
       }
 
+      // If specified, put the default qty. in a hidden field.
+      if (!empty($_GET['qty']) && intval($_GET['qty']) > 0) {
+        $form['default_qty'] = array(
+          '#type' => 'hidden',
+          '#value' => intval($_GET['qty']),
+        );
+      }
+
       // If enabled, add attributes form to the top of the node form if the node
       // has not already been checked out.
       if (module_exists('uc_attribute') && empty($form['#node']->uc_order_product_id)) {
@@ -412,6 +420,11 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   drupal_set_message(t('This product requires some additional information.'));
 
   $get = array('product_nid='. $form_state['values']['nid']);
+
+  // Pass the qty. if specified.
+  if (!empty($form_state['values']['qty']) && intval($form_state['values']['qty']) > 0) {
+    $get[] = 'qty='. intval($form_state['values']['qty']);
+  }
 
   // Pass the attributes selections in the URL.
   $attr = array();
@@ -533,6 +546,11 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         // Make sure we add at least 1 to the cart.
         if (empty($product->default_qty)) {
           $product->default_qty = 1;
+        }
+
+        // Override the default qty. if specified.
+        if (intval($node->default_qty) > 0) {
+          $product->default_qty = intval($node->default_qty);
         }
 
         // Build the preliminary add to cart data array.
