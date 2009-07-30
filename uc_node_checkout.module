@@ -299,7 +299,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         // Otherwise look in the $_GET array.
         $product_nid = $_GET['product_nid'];
       }
-      elseif (empty($form['nid']['#value'])) {
+      elseif (empty($form['nid']['#value']) && !$form['#programmed']) {
         // If none was found, we must ask the user to specify one.
         drupal_goto('ucnc-select/'. $type);
       }
