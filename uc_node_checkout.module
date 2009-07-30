@@ -474,7 +474,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
   if (!$view || !isset($view->display[$view_display])) {
     // Redirect to the node add form if a product NID is associated.
     if ($nc_map['nid']) {
-      drupal_goto('node/add/'. $type, 'product_nid='. $nc_map['nid']);
+      drupal_goto('node/add/'. str_replace('_', '-', $type), 'product_nid='. $nc_map['nid']);
     }
     else {
       // We're outta luck...
@@ -496,7 +496,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
   if (empty($options) && $nc_map['nid']) {
     // Redirect to the node add form if a product NID is associated.
     if ($nc_map['nid']) {
-      drupal_goto('node/add/'. $type, 'product_nid='. $nc_map['nid']);
+      drupal_goto('node/add/'. str_replace('_', '-', $type), 'product_nid='. $nc_map['nid']);
     }
     else {
       // We're outta luck...
@@ -526,7 +526,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
 }
 
 function uc_node_checkout_product_select_form_submit($form, &$form_state) {
-  drupal_goto('node/add/'. $form_state['values']['type'], 'product_nid='. $form_state['values']['product_nid']);
+  drupal_goto('node/add/'. str_replace('_', '-', $form_state['values']['type']), 'product_nid='. $form_state['values']['product_nid']);
 }
 
 /**
