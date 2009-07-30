@@ -586,7 +586,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     // any changed attribute options.
     case 'update':
       // Only save attributes if this node has not been checked out.
-      if (empty($node->uc_order_product_id)) {
+      if (empty($node->uc_order_product_id) && isset($node->attributes)) {
         $data = db_result(db_query("SELECT data FROM {uc_cart_products} WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", $node->nid));
 
         $data = unserialize($data);
