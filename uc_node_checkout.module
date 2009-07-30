@@ -395,7 +395,12 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
       if (!empty($fields) && !user_access('edit any '. $type .' content')) {
         foreach ($fields as $field) {
-          $form[$field]['#access'] = FALSE;
+          if ($field == 'preview') {
+            $form['buttons']['preview']['#access'] = FALSE;
+          }
+          else {
+            $form[$field]['#access'] = FALSE;
+          }
         }
       }
 
