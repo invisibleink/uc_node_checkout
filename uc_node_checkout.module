@@ -319,6 +319,9 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
           if (!empty($_GET['attr'])) {
             foreach (explode('_', $_GET['attr']) as $attr) {
               list($aid, $oid) = explode('-', $attr);
+              if ($form['attributes'][$aid]['#type'] == 'checkboxes') {
+                $oid = explode('|', $oid);
+              }
               $form['attributes'][$aid]['#default_value'] = $oid;
             }
           }
@@ -407,6 +410,9 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   $attr = array();
 
   foreach ((array) $form_state['values']['attributes'] as $aid => $oid) {
+    if ($form['attributes'][$aid]['#type'] == 'checkboxes') {
+      $oid = implode('|', $oid);
+    }
     $attr[] = $aid .'-'. $oid;
   }
 
@@ -877,4 +883,3 @@ function uc_node_checkout_load_order_product($order_product_id) {
 
   return $products[$order_product_id];
 }
-
