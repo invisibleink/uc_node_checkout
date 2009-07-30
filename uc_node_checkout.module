@@ -109,7 +109,7 @@ function uc_node_checkout_help($path, $arg) {
 function uc_node_checkout_theme() {
   return array(
     'uc_cart_click_to_edit' => array(
-      'arguments' => array(),
+      'arguments' => array($link = ''),
     ),
     'uc_node_cart_teaser' => array(
       'arguments' => array('node' => NULL),
@@ -215,14 +215,21 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       if (isset($item->checkout_node)) {
         $node = $item->checkout_node;
 
-        // Update the title if the based on user access.
-        if (variable_get('uc_node_checkout_cart_titles', TRUE)) {
+        // Update the title if configured based on user access.
+        if (variable_get('uc_node_checkout_cart_titles', TRUE) || variable_get('uc_node_checkout_click_to_edit', TRUE)) {
           if (node_access('update', $node)) {
-            $title = l($item->title, 'node/'. $node->nid .'/edit', array('query' => 'destination=cart'));
+            if (variable_get('uc_node_checkout_cart_titles', TRUE)) {
+              $title = l($item->title, 'node/'. $node->nid .'/edit', array('query' => 'destination=cart'));
+              $click = t('(click to edit)');
+            }
+            else {
+              $title = $form['items'][$i]['title']['#value'];
+              $click = ' - '. l(t('edit'), 'node/'. $node->nid .'/edit', array('query' => 'destination=cart'));
+            }
 
             // Add the click to edit link to the title if necessary.
             if (variable_get('uc_node_checkout_click_to_edit', TRUE)) {
-              $title .= ' '. theme('uc_cart_click_to_edit');
+              $title .= ' '. theme('uc_cart_click_to_edit', $click);
             }
           }
           else {
@@ -677,8 +684,8 @@ function uc_node_checkout_order($op, &$arg1, $arg2) {
 }
 
 // Themes a click to edit link by node checkout products in a customer's cart.
-function theme_uc_cart_click_to_edit() {
-  return '<span class="node-checkout-edit">'. t('(click to edit)') .'</span>';
+function theme_uc_cart_click_to_edit($link) {
+  return '<span class="node-checkout-edit">'. $link .'</span>';
 }
 
 // Themes a cart teaser for a node checkout product in the shopping cart.

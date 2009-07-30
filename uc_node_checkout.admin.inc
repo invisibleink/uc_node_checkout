@@ -240,7 +240,7 @@ function uc_node_checkout_settings_form() {
   );
   $form['display']['uc_node_checkout_click_to_edit'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Display a "click to edit" message on the cart view form for node checkout products.'),
+    '#title' => t('Display a "click to edit" message or link on the cart view form for node checkout products.'),
     '#description' => t('Override theme_uc_cart_click_to_edit() in your theme to alter the display of this.'),
     '#default_value' => variable_get('uc_node_checkout_click_to_edit', TRUE),
   );
@@ -306,4 +306,3 @@ function uc_node_checkout_autocomplete($string = '') {
   print drupal_to_js($matches);
   exit();
 }
-
