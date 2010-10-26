@@ -650,6 +650,16 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         }
       }
 
+      // Link node to the corresponding order
+      global $user;
+      if (isset($node->uc_order_product_id) && $node->uc_order_product_id && (user_access('view all orders') || (user_access('view own orders') && $node->uid == $user->uid))) {
+        $result = db_fetch_array(db_query('SELECT {uc_order_products}.order_id, {uc_orders}.uid FROM {uc_order_products},{uc_orders} WHERE order_product_id = %d AND {uc_orders}.order_id = {uc_order_products}.order_id', $node->uc_order_product_id));
+        $node->content['uc_node_checkout_order'] = array(
+          '#value' => '<span class="uc-node-checkout-order-link">'. l(t('Order @order_id', array('@order_id' => $result['order_id'])), 'user/'. $result['uid'] .'/order/'. $result['order_id']) .'</span>',
+          '#weight' => 10,
+        );
+      }
+
       break;
   }
 }
@@ -912,4 +922,53 @@ function uc_node_checkout_load_order_product($order_product_id) {
   }
 
   return $products[$order_product_id];
+}
+
+/**
+ * Implementation of hook_order_pane()
+ */
+function uc_node_checkout_order_pane() {
+  $panes[] = array(
+    'id' => 'uc_node_checkout',
+    'callback' => 'uc_node_checkout_order_pane_nodes',
+    'title' => t('Custom Products'),
+    'class' => 'pos-left abs-left',
+    'weight' => 7,
+    'show' => array('view', 'customer'),
+  );
+  return $panes;
+}
+
+/**
+ * Handle the "Custom Products" order pane.
+ */
+function uc_node_checkout_order_pane_nodes($op, $arg1) {
+  switch ($op) {
+    case 'view':
+    case 'customer':
+      $order = $arg1;
+
+      $output  = '<p>The following products in this order have customizations described below.</p>';
+      $output .= '<p>Please click each link to view more information.</p>';
+      foreach ($order->products as $product) {
+        if (!isset($product->data['node_checkout_nid'])) {
+          continue;
+        }
+        $node_checkout_node = node_load($product->data['node_checkout_nid']);
+
+        $items[] = l(t('@product_title (SKU @product_model) - @node_checkout_title',
+                       array('@product_title' => $product->title,
+                             '@product_model' => $product->model,
+                             '@node_checkout_title' => $node_checkout_node->title)),
+            'node/'. $node_checkout_node->nid);
+      }
+      $output .= theme('item_list', $items);
+
+      if (count($items)) {
+        return $output;
+      }
+      else {
+        return '';
+      }
+  }
 }
