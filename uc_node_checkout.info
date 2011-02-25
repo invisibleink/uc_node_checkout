@@ -1,4 +1,3 @@
-; $Id$
 name = Node Checkout
 description = Adds a product to the cart when a checkout node is created.
 dependencies[] = uc_cart
