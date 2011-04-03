@@ -733,6 +733,9 @@ function theme_uc_node_cart_teaser($node) {
  */
 function theme_uc_node_checkout_node_attributes($product) {
   foreach ($product->data['attributes'] as $attribute => $option) {
+    if (is_array($option)) {
+      $option = implode(', ', $option);
+    }
     $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => $option));
   }
 
