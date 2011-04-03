@@ -259,10 +259,6 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       }
       $i++;
     }
-
-    // Add a submit handler to check for removed products.
-    $form['update']['#submit'][] = 'uc_node_checkout_cart_view_submit';
-    $form['#submit'][] = 'uc_node_checkout_cart_view_submit';
   }
 
   // Check stock levels on the checkout form and prevent checkout if specified.
@@ -446,19 +442,6 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
 
   // Redirect to the node add form.
   $form['#redirect'] = array('node/add/'. str_replace('_', '-', $form_state['values']['node_type']), implode('&', $get));
-}
-
-// Submit handler for cart view form that deletes nodes when necessary.
-function uc_node_checkout_cart_view_submit($form, &$form_state) {
-  if (variable_get('uc_node_checkout_delete_nodes', TRUE)) {
-    foreach ($form_state['values']['items'] as $key => $item) {
-      $data = unserialize($item['data']);
-
-      if ($item['remove'] && isset($data['node_checkout_nid'])) {
-        node_delete($data['node_checkout_nid']);
-      }
-    }
-  }
 }
 
 // For node types associated with Views, allows the customer to select the
@@ -672,6 +655,16 @@ function uc_node_checkout_cart_item($op, &$item) {
       // Load the entire related node into the item array for use in display.
       if (isset($item->data['node_checkout_nid']) && $node = node_load($item->data['node_checkout_nid'])) {
         $item->checkout_node = $node;
+      }
+      break;
+
+    case 'remove':
+      // Delete the checkout node if setting calls for it
+      if (variable_get('uc_node_checkout_delete_nodes', TRUE)) {
+        $data = unserialize($item->data);
+        if (isset($data['node_checkout_nid'])) {
+          node_delete($data['node_checkout_nid']);
+        }
       }
       break;
   }
