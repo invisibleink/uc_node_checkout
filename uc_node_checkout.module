@@ -116,6 +116,9 @@ function uc_node_checkout_theme() {
     'uc_node_checkout_node_attributes' => array(
       'arguments' => array(),
     ),
+    'uc_node_checkout_restrict_cart_qty_field' => array(
+      'arguments' => array('form' => NULL),
+    ),
   );
 }
 
@@ -256,6 +259,11 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
         // Rebuild the description from the title and options.
         $form['items'][$i]['desc']['#value'] = $form['items'][$i]['title']['#value'] . $form['items'][$i]['description']['#value'];
+
+        // Seeing as the quantity is passsed in and should not be changed at this stage, disable.
+        $form['items'][$i]['qty']['#value'] = $form['items'][$i]['qty']['#default_value'];
+        $form['items'][$i]['qty']['#type'] = 'value';
+        $form['items'][$i]['qty']['#theme'] = 'uc_node_checkout_restrict_cart_qty_field';
       }
       $i++;
     }
@@ -743,6 +751,13 @@ function theme_uc_node_checkout_node_attributes($product) {
            .'</div>'. theme('item_list', $option_rows) .'</div>';
 
   return $output;
+}
+
+/**
+ * Themes cart Qty. boxes otherwise they won't display due to being #type = value
+ */
+function theme_uc_node_checkout_restrict_cart_qty_field($element) {
+  return check_plain($element['#value']);
 }
 
 /**
