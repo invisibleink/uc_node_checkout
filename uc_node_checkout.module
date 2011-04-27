@@ -998,8 +998,8 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
     case 'customer':
       $order = $arg1;
 
-      $output  = '<p>The following products in this order have customizations described below.</p>';
-      $output .= '<p>Please click each link to view more information.</p>';
+      $output  = '<p>' . t('The following products in this order have customizations described below.') . '</p>';
+      $output .= '<p>' . t('Please click each link to view more information.') . '</p>';
       foreach ($order->products as $product) {
         if (!isset($product->data['node_checkout_nid'])) {
           continue;
