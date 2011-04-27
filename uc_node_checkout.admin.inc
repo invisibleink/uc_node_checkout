@@ -212,6 +212,7 @@ function uc_node_checkout_settings_form() {
   $form['behavior']['uc_node_checkout_delete_nodes'] = array(
     '#type' => 'checkbox',
     '#title' => t('Delete nodes whose creators remove the associated product from their cart.'),
+    '#description' => t('Note: The (possibly anonymous) user must have the permission to delete the specified node type.'),
     '#default_value' => variable_get('uc_node_checkout_delete_nodes', TRUE),
   );
 
