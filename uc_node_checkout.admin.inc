@@ -106,6 +106,22 @@ function uc_node_checkout_type_form(&$form_state, $type) {
         $options[$key] = check_plain($value['widget']['label']);
       }
 
+      $form['order_status'] = array(
+        '#type' => 'select',
+        '#title' => t('Order status field'),
+        '#description' => t('Update this field with the Ubercart order status.'),
+        '#options' => array('' => '---') + $options,
+        '#default_value' => variable_get('uc_node_checkout_' . $type->type . '_field_orderstatus', ''),
+      );
+
+      $form['order_id'] = array(
+        '#type' => 'select',
+        '#title' => t('Order ID field'),
+        '#description' => t('Update this field with the Ubercart order ID.'),
+        '#options' => array('' => '---') + $options,
+        '#default_value' => variable_get('uc_node_checkout_' . $type->type . '_field_orderid', ''),
+      );
+
       $form['restricted_fields'] = array(
         '#type' => 'checkboxes',
         '#title' => t('Restricted node fields'),
@@ -150,6 +166,8 @@ function uc_node_checkout_type_form_submit($form, &$form_state) {
   }
 
   variable_set('uc_node_checkout_'. $form_state['values']['type'] .'_restrictions', $fields);
+  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderstatus', $form_state['values']['order_status']);
+  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderid', $form_state['values']['order_id']);
 
   $form_state['redirect'] = 'admin/store/settings/node-checkout';
 }

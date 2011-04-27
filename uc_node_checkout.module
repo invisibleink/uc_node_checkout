@@ -684,6 +684,30 @@ function uc_node_checkout_cart_item($op, &$item) {
 }
 
 /**
+ * Update the node's CCK fields if desired.
+ */
+function uc_node_checkout_update_content_fields($product, $order, $nid) {
+  $node = node_load($nid);
+
+  // Set the order ID
+  $field_orderid = variable_get('uc_node_checkout_' . $node->type . '_field_orderid', FALSE);
+  if ($field_orderid) {
+    $node->{$field_orderid}[0]['value'] = $order->order_id;
+  }
+
+  // Set the order status
+  $field_orderstatus = variable_get('uc_node_checkout_' . $node->type . '_field_orderstatus', FALSE);
+  if ($field_orderstatus) {
+    $node->{$field_orderstatus}[0]['value'] = $order->order_status;
+  }
+
+  // Save the node
+  if ($field_orderstatus || $field_orderid) {
+    node_save($node);
+  }
+}
+
+/**
  * Implementation of UC hook_order().
  */
 function uc_node_checkout_order($op, &$arg1, $arg2) {
@@ -696,6 +720,9 @@ function uc_node_checkout_order($op, &$arg1, $arg2) {
         if (!empty($product->data['node_checkout_nid'])) {
           // Save the association.
           uc_node_checkout_save_product_association($product->order_product_id, $product->data['node_checkout_nid']);
+
+          // Update the CCK fields
+          uc_node_checkout_update_content_fields($product, $arg1, $product->data['node_checkout_nid']);
         }
       }
       break;
@@ -713,6 +740,9 @@ function uc_node_checkout_order($op, &$arg1, $arg2) {
 
             if ($node) {
               $arg1->products[$i]->data['attributes'][token_replace($attribute, 'node', $node)] = token_replace($option, 'node', $node);
+
+              // Update the CCK fields
+              uc_node_checkout_update_content_fields($arg1->products[$i], $arg1, $arg1->products[$i]->data['node_checkout_nid']);
             }
           }
         }
