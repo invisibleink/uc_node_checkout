@@ -89,7 +89,7 @@ function uc_node_checkout_admin_settings_title($type) {
  * Implementation of hook_perm().
  */
 function uc_node_checkout_perm() {
-  return array('administer node checkout');
+  return array('administer node checkout', 'create node associations');
 }
 
 /**
@@ -578,7 +578,22 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         }
 
         // Add the product to the cart!
-        uc_cart_add_item($product->nid, $product->default_qty, $data, NULL, FALSE, FALSE);
+        // If the user is an administrator and is creating this order manually
+        if (user_access('create node associations')
+            && !empty($_GET['order_id'])
+            && !empty($_GET['product_id'])
+            && !empty($_GET['order_product_id'])) {
+          uc_node_checkout_save_product_association($_GET['order_product_id'], $node->nid);
+          $order_product = uc_node_checkout_load_order_product($_GET['order_product_id']);
+          $order_product->data['node_checkout_nid'] = $node->nid;
+          $res = uc_order_product_save($_GET['order_id'], $order_product);
+          if (!$res) {
+            drupal_set_message(t('Unable to save product association, invalid order_id or order_product_id!'), 'warning');
+          }
+        }
+        else {
+          uc_cart_add_item($product->nid, $product->default_qty, $data, NULL, FALSE, FALSE);
+        }
       }
       break;
 
@@ -1001,17 +1016,38 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
       $output  = '<p>' . t('The following products in this order have customizations described below.') . '</p>';
       $output .= '<p>' . t('Please click each link to view more information.') . '</p>';
       foreach ($order->products as $product) {
-        if (!isset($product->data['node_checkout_nid'])) {
-          continue;
-        }
-        $node_checkout_node = node_load($product->data['node_checkout_nid']);
 
-        $items[] = l(t('@product_title (SKU @product_model) - @node_checkout_title',
-                       array('@product_title' => $product->title,
-                             '@product_model' => $product->model,
-                             '@node_checkout_title' => $node_checkout_node->title)),
-            'node/'. $node_checkout_node->nid);
+        // Check for a node type association
+        $has_association = isset($product->data['node_checkout_nid']);
+
+        // If an association was not found check if there should have been
+        if (!$has_association) {
+          $association_node_type = uc_node_checkout_node_type_association($product->nid);
+        }
+
+        // Create a row for customised products
+        if ($has_association) {
+          $node_checkout_node = node_load($product->data['node_checkout_nid']);
+          $items[] = l(t('@product_title (SKU @product_model) - @node_checkout_title',
+                         array('@product_title' => $product->title,
+                               '@product_model' => $product->model,
+                               '@node_checkout_title' => $node_checkout_node->title)),
+              'node/'. $node_checkout_node->nid);
+        }
+
+        // Create a row for should-be customised products
+        if (!$has_association && $association_node_type) {
+          $items[] = t('(!create_now_link) The product %product_title (SKU %product_model) is missing its node customisation.',
+            array(
+              '%product_title' => $product->title,
+              '%product_model' => $product->model,
+              '!create_now_link' => l(t('Create node association'), 'node/add/' . $association_node_type,
+                array('query' => array('order_id' => $order->order_id, 'product_id' => $product->nid, 'order_product_id' => $product->order_product_id))),
+            )
+          );
+        }
       }
+
       $output .= theme('item_list', $items);
 
       if (count($items)) {
