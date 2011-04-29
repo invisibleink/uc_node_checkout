@@ -644,7 +644,8 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       }
 
       // Add any existing attribute text to the node on a full pageview.
-      if ($arg4 === TRUE && !empty($node->uc_order_product_id)) {
+      $show_attributes = variable_get('uc_node_checkout_show_original_attributes', TRUE);
+      if ($show_attributes && $arg4 === TRUE && !empty($node->uc_order_product_id)) {
         drupal_add_css(drupal_get_path('module', 'uc_node_checkout') .'/uc_node_checkout.css');
 
         // Load the product from the order.

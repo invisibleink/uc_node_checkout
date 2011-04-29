@@ -268,42 +268,49 @@ function uc_node_checkout_settings_form() {
     '#description' => t('Override theme_uc_node_cart_teaser() in your theme to alter the display of this.'),
     '#default_value' => variable_get('uc_node_cart_teaser', TRUE),
   );
-  $form['display']['order'] = array(
+  $form['display']['uc_node_checkout_show_original_attributes'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show attributes of the purchased products when viewing the checkout node.'),
+    '#description' => t('If checked, nodes attached to products will display the orders products attributes when viewed.'),
+    '#default_value' => variable_get('uc_node_checkout_show_original_attributes', TRUE),
+  );
+
+  $form['display_order'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Order product display'),
+    '#title' => t('Order display settings'),
     '#description' => t('These settings require the Attribute module to be enabled and will add an attribute line to the node checkout product on order view screens.'),
   );
-  $form['display']['order']['uc_node_order_product_display'] = array(
+  $form['display_order']['uc_node_order_product_display'] = array(
     '#type' => 'checkbox',
     '#title' => t('Display a node teaser as an attribute/option combination for nodes on orders.'),
     '#default_value' => variable_get('uc_node_order_product_display', TRUE),
     '#disabled' => !module_exists('uc_attribute'),
   );
-  $form['display']['order']['uc_node_order_product_teaser_override'] = array(
+  $form['display_order']['uc_node_order_product_teaser_override'] = array(
     '#type' => 'checkbox',
     '#title' => t('Add to the default node cart teaser using these settings.'),
     '#default_value' => variable_get('uc_node_order_product_teaser_override', FALSE),
   );
-  $form['display']['order']['uc_node_order_product_attribute'] = array(
+  $form['display_order']['uc_node_order_product_attribute'] = array(
     '#type' => 'textfield',
     '#title' => t('Order product attribute'),
     '#description' => t('Specify the name of the attribute.'),
     '#default_value' => variable_get('uc_node_order_product_attribute', 'ID'),
   );
-  $form['display']['order']['uc_node_order_product_option'] = array(
+  $form['display_order']['uc_node_order_product_option'] = array(
     '#type' => 'textfield',
     '#title' => t('Order product option'),
     '#description' => t('Specify a pattern for the option string; uses node tokens like [nid] and [title].'),
     '#default_value' => variable_get('uc_node_order_product_option', '[nid] - [title]'),
   );
-  $form['display']['order']['tokens'] = array(
+  $form['display_order']['tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('Node tokens'),
     '#description' => t('Use these tokens in the attribute and option fields above.  They will be replaced with values from the node checkout nodes on the order pages. Do not use tokens ending in -raw for these settings!'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $form['display']['order']['tokens']['data'] = array(
+  $form['display_order']['tokens']['data'] = array(
     '#value' => '<div>'. theme('token_help', 'node') .'</div>',
   );
 
