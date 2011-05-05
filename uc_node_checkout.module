@@ -732,6 +732,29 @@ function uc_node_checkout_cart_item($op, &$item) {
         }
       }
       break;
+
+    case 'can_ship':
+      // Determine if there is a shippable component to this node checkout product
+      // We will look at the default $item settings to determine.
+      if ($uc_node_checkout_product = node_load($item->data['nid'])) {
+        // If the item was set to be 'shippable' on the node edit form of the uc_node_checkout product,
+        // not the associated node to purchase, then we'll send this off to ubercart as a 'shippable' item
+        // and Ubercart will use this is a trigger to display the shipping pane. Else, if set to unshippable
+        // Ubercart will not trigger the shipping pane, provided there are no other shippable products
+        // in the cart with the uc_node_checkout items.
+        if ($uc_node_checkout_product->shippable == 0) {
+          // If this, then the product was set to 'not shippable'
+          return FALSE;
+        }
+        else {
+          return TRUE;
+        }
+      }
+      else {
+        // $item->data['nid'] was not found or unable to node_load $item->data['nid']'s nid. So show an error:
+        drupal_set_message(t('Unable to determine the product class associated with item ' . $item->data['title'] . ' so the shipping pane is included on this Ubercart display'), 'error');
+      }
+      break;
   }
 }
 
