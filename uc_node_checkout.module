@@ -65,12 +65,19 @@ function uc_node_checkout_menu() {
   return $items;
 }
 
-// Determines access to the product selection form for node types associated
-// with Views.
+
+/**
+ * Determines access to the product selection form for node types associated
+ * with Views.
+ */
 function uc_node_checkout_product_select_access($type) {
   return module_exists('views') ? user_access('create '. $type .' content') : FALSE;
 }
 
+
+/**
+ *
+ */
 function uc_node_checkout_type_load($arg) {
   $types = node_get_types('types');
   foreach ($types as $type) {
@@ -81,9 +88,14 @@ function uc_node_checkout_type_load($arg) {
   return FALSE;
 }
 
+
+/**
+ *
+ */
 function uc_node_checkout_admin_settings_title($type) {
   return t('@type product checkout', array('@type' => $type->name));
 }
+
 
 /**
  * Implementation of hook_perm().
@@ -91,6 +103,7 @@ function uc_node_checkout_admin_settings_title($type) {
 function uc_node_checkout_perm() {
   return array('administer node checkout', 'create node associations');
 }
+
 
 /**
  * Implementation of hook_help().
@@ -101,6 +114,7 @@ function uc_node_checkout_help($path, $arg) {
       return t('The table represents products associated with node types on your site. If you want a node type to be governed by UC Node Checkout, simply click its edit link and specify which product node on your site should be added to the cart when a node of that type gets created.  Use the settings tab to adjust some extra behaviors and display settings of the module.');
   }
 }
+
 
 /**
  * Implementation of hook_theme().
@@ -122,6 +136,7 @@ function uc_node_checkout_theme() {
   );
 }
 
+
 /**
  * Implementation of hook_enable().
  */
@@ -133,6 +148,7 @@ function uc_node_checkout_enable() {
   // are invoked in the right order.
   db_query("UPDATE {system} SET weight = %d WHERE name = 'uc_node_checkout' AND type = 'module'", $weight + 100);
 }
+
 
 /**
  * Implementation of hook_exit().
@@ -150,6 +166,7 @@ function uc_node_checkout_exit() {
     }
   }
 }
+
 
 /**
  * Implementation of hook_user().
@@ -185,6 +202,7 @@ function uc_node_checkout_user($op, &$edit, &$user, $category = NULL) {
   }
 }
 
+
 /**
  * Implementation of hook_form_alter().
  */
@@ -216,6 +234,9 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
     foreach ($items as $item) {
       if (isset($item->checkout_node)) {
         $node = $item->checkout_node;
+
+        // Update the item being checked out
+        uc_node_checkout_update_content_fields($item, $node);
 
         // Update the title if configured based on user access.
         if (variable_get('uc_node_checkout_cart_titles', TRUE) || variable_get('uc_node_checkout_click_to_edit', TRUE)) {
@@ -422,7 +443,10 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-// Submit handler for add to cart buttons on node checkout associated products.
+
+/**
+ * Submit handler for add to cart buttons on node checkout associated products. 
+ */
 function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   // Display a message so the customer isn't totally confused.
   drupal_set_message(t('This product requires some additional information.'));
@@ -452,8 +476,11 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   $form['#redirect'] = array('node/add/'. str_replace('_', '-', $form_state['values']['node_type']), implode('&', $get));
 }
 
-// For node types associated with Views, allows the customer to select the
-// associated product up front.
+
+/**
+ * For node types associated with Views, allows the customer to select the
+ * associated product up front.
+ */
 function uc_node_checkout_product_select_form($form_state, $type) {
   $form = array();
   $options = array();
@@ -525,9 +552,14 @@ function uc_node_checkout_product_select_form($form_state, $type) {
   return $form;
 }
 
+
+/**
+ *
+ */
 function uc_node_checkout_product_select_form_submit($form, &$form_state) {
   drupal_goto('node/add/'. str_replace('_', '-', $form_state['values']['type']), 'product_nid='. $form_state['values']['product_nid']);
 }
+
 
 /**
  * Implementation of hook_nodeapi().
@@ -675,6 +707,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
   }
 }
 
+
 /**
  * Implementation of UC hook_cart_item().
  */
@@ -699,29 +732,53 @@ function uc_node_checkout_cart_item($op, &$item) {
   }
 }
 
+
 /**
  * Update the node's CCK fields if desired.
+ *
+ * @param $product The product node
+ * @param $node The node checkout node
+ * @param $order The order object
  */
-function uc_node_checkout_update_content_fields($product, $order, $nid) {
-  $node = node_load($nid);
+function uc_node_checkout_update_content_fields($product, $node, $order = NULL) {
+
+  $needs_save = FALSE;
 
   // Set the order ID
-  $field_orderid = variable_get('uc_node_checkout_' . $node->type . '_field_orderid', FALSE);
-  if ($field_orderid) {
-    $node->{$field_orderid}[0]['value'] = $order->order_id;
+  if ($order) {
+    $field_orderid = variable_get('uc_node_checkout_' . $node->type . '_field_orderid', FALSE);
+    if ($field_orderid) {
+      $node->{$field_orderid}[0]['value'] = $order->order_id;
+      $needs_save = TRUE;
+    }
   }
 
   // Set the order status
   $field_orderstatus = variable_get('uc_node_checkout_' . $node->type . '_field_orderstatus', FALSE);
   if ($field_orderstatus) {
-    $node->{$field_orderstatus}[0]['value'] = $order->order_status;
+    $orderstatus =& $node->{$field_orderstatus}[0]['value'];
+    if ($order) {
+      $orderstatus = $order->order_status;
+      $needs_save = TRUE;
+    } else if (empty($orderstatus)) {
+      $orderstatus = "pre_checkout";
+      $needs_save = TRUE;
+    }
+  }
+
+  // Set the product ID
+  $field_productid = variable_get('uc_node_checkout_' . $node->type . '_field_productid', FALSE);
+  if ($field_productid) {
+    $node->{$field_productid}[0]['value'] = $product->nid;
+    $needs_save = TRUE;
   }
 
   // Save the node
-  if ($field_orderstatus || $field_orderid) {
+  if ($needs_save) {
     node_save($node);
   }
 }
+
 
 /**
  * Implementation of UC hook_order().
@@ -737,8 +794,9 @@ function uc_node_checkout_order($op, &$arg1, $arg2) {
           // Save the association.
           uc_node_checkout_save_product_association($product->order_product_id, $product->data['node_checkout_nid']);
 
-          // Update the CCK fields
-          uc_node_checkout_update_content_fields($product, $arg1, $product->data['node_checkout_nid']);
+          // Update the post-save CCK fields
+          $node = node_load($product->data['node_checkout_nid']);
+          uc_node_checkout_update_content_fields($product, $node, $arg1);
         }
       }
       break;
@@ -758,7 +816,7 @@ function uc_node_checkout_order($op, &$arg1, $arg2) {
               $arg1->products[$i]->data['attributes'][token_replace($attribute, 'node', $node)] = token_replace($option, 'node', $node);
 
               // Update the CCK fields
-              uc_node_checkout_update_content_fields($arg1->products[$i], $arg1, $arg1->products[$i]->data['node_checkout_nid']);
+              uc_node_checkout_update_content_fields($arg1->products[$i], $node, $arg1);
             }
           }
         }
@@ -767,49 +825,6 @@ function uc_node_checkout_order($op, &$arg1, $arg2) {
   }
 }
 
-// Themes a click to edit link by node checkout products in a customer's cart.
-function theme_uc_cart_click_to_edit($link) {
-  return '<span class="node-checkout-edit">'. $link .'</span>';
-}
-
-// Themes a cart teaser for a node checkout product in the shopping cart.
-function theme_uc_node_cart_teaser($node) {
-  $output = '<div class="uc-node-cart-teaser" id="uc-node-cart-teaser-'
-          . $node->nid .'">'. check_plain($node->title) .'</div>';
-
-  return $output;
-}
-
-/**
- * Themes the attributes selected for a product when the node was purchased on
- *   the node view page.
- *
- * @param $product
- *   The order product array for the node.
- * @return
- *   An HTML string representing the attribute selections from the purchase of
- *     the node.
- */
-function theme_uc_node_checkout_node_attributes($product) {
-  foreach ($product->data['attributes'] as $attribute => $option) {
-    if (is_array($option)) {
-      $option = implode(', ', $option);
-    }
-    $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => $option));
-  }
-
-  $output = '<div class="ucnc-attributes"><div class="ucnc-attributes-label">'. t('Original product attributes:')
-           .'</div>'. theme('item_list', $option_rows) .'</div>';
-
-  return $output;
-}
-
-/**
- * Themes cart Qty. boxes otherwise they won't display due to being #type = value
- */
-function theme_uc_node_checkout_restrict_cart_qty_field($element) {
-  return check_plain($element['#value']);
-}
 
 /**
  * Returns an array mapping node types to their associated products.
@@ -841,6 +856,7 @@ function uc_node_checkout_product_map($type = '') {
   return $nc_map;
 }
 
+
 /**
  * Determines whether or not a given node has any product associations.
  *
@@ -859,6 +875,7 @@ function uc_node_checkout_node_associated($node) {
 
   return FALSE;
 }
+
 
 /**
  * Determines whether or not a given product has a node type association.
@@ -913,8 +930,11 @@ function uc_node_checkout_node_type_association($product_nid) {
   return FALSE;
 }
 
-// Saves a node to order product association when a node checkout product is
-//   purchased.
+
+/**
+ * Saves a node to order product association when a node checkout product is
+ * purchased.
+ */
 function uc_node_checkout_save_product_association($order_product_id, $nid) {
   // First attempt to update any existing associations.
   db_query("UPDATE {uc_node_checkout_order_products} SET order_product_id = %d WHERE nid = %d", $order_product_id, $nid);
@@ -925,6 +945,7 @@ function uc_node_checkout_save_product_association($order_product_id, $nid) {
     db_query("INSERT INTO {uc_node_checkout_order_products} (nid, order_product_id) VALUES (%d, %d)", $nid, $order_product_id);
   }
 }
+
 
 /**
  * Loads the cart item data corresponding to a node for an unchecked out node
@@ -960,6 +981,7 @@ function uc_node_checkout_load_cart_item($nid) {
   return $items[$nid];
 }
 
+
 /**
  * Loads the order product data corresponding to a node for a node checkout
  *   governed node.
@@ -990,6 +1012,7 @@ function uc_node_checkout_load_order_product($order_product_id) {
   return $products[$order_product_id];
 }
 
+
 /**
  * Implementation of hook_order_pane()
  */
@@ -1004,6 +1027,7 @@ function uc_node_checkout_order_pane() {
   );
   return $panes;
 }
+
 
 /**
  * Handle the "Custom Products" order pane.
@@ -1058,4 +1082,56 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
         return '';
       }
   }
+}
+
+
+/**
+ * Themes a click to edit link by node checkout products in a customer's cart.
+ */
+function theme_uc_cart_click_to_edit($link) {
+  return '<span class="node-checkout-edit">'. $link .'</span>';
+}
+
+
+/**
+ * Themes a cart teaser for a node checkout product in the shopping cart.
+ */
+function theme_uc_node_cart_teaser($node) {
+  $output = '<div class="uc-node-cart-teaser" id="uc-node-cart-teaser-'
+          . $node->nid .'">'. check_plain($node->title) .'</div>';
+
+  return $output;
+}
+
+
+/**
+ * Themes the attributes selected for a product when the node was purchased on
+ *   the node view page.
+ *
+ * @param $product
+ *   The order product array for the node.
+ * @return
+ *   An HTML string representing the attribute selections from the purchase of
+ *     the node.
+ */
+function theme_uc_node_checkout_node_attributes($product) {
+  foreach ($product->data['attributes'] as $attribute => $option) {
+    if (is_array($option)) {
+      $option = implode(', ', $option);
+    }
+    $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => $option));
+  }
+
+  $output = '<div class="ucnc-attributes"><div class="ucnc-attributes-label">'. t('Original product attributes:')
+           .'</div>'. theme('item_list', $option_rows) .'</div>';
+
+  return $output;
+}
+
+
+/**
+ * Themes cart Qty. boxes otherwise they won't display due to being #type = value
+ */
+function theme_uc_node_checkout_restrict_cart_qty_field($element) {
+  return check_plain($element['#value']);
 }

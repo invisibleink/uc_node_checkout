@@ -5,7 +5,9 @@
  * Defines administration pages for the node checkout module.
  */
 
-// Displays the node checkout settings table/form.
+/**
+ * Displays the node checkout settings table/form.
+ */
 function uc_node_checkout_admin() {
   $nc_map = uc_node_checkout_product_map();
   $types = node_get_types('types');
@@ -38,7 +40,10 @@ function uc_node_checkout_admin() {
   return theme('table', $header, $rows);
 }
 
-// Displays the form to map a product to a node type.
+
+/**
+ * Displays the form to map a product to a node type.
+ */
 function uc_node_checkout_type_form(&$form_state, $type) {
   $nc_map = uc_node_checkout_product_map();
   $form = array();
@@ -122,6 +127,14 @@ function uc_node_checkout_type_form(&$form_state, $type) {
         '#default_value' => variable_get('uc_node_checkout_' . $type->type . '_field_orderid', ''),
       );
 
+      $form['product_id'] = array(
+        '#type' => 'select',
+        '#title' => t('Product ID field'),
+        '#description' => t('Update this field with the Product ID.'),
+        '#options' => array('' => '---') + $options,
+        '#default_value' => variable_get('uc_node_checkout_' . $type->type . '_field_productid', ''),
+      );
+
       $form['restricted_fields'] = array(
         '#type' => 'checkboxes',
         '#title' => t('Restricted node fields'),
@@ -140,6 +153,10 @@ function uc_node_checkout_type_form(&$form_state, $type) {
   return $form;
 }
 
+
+/**
+ *
+ */
 function uc_node_checkout_type_form_submit($form, &$form_state) {
   // Save the product node ID.
   if ($form_state['values']['product_nid'] || $form_state['values']['view']) {
@@ -165,14 +182,18 @@ function uc_node_checkout_type_form_submit($form, &$form_state) {
     $fields[] = 'preview';
   }
 
-  variable_set('uc_node_checkout_'. $form_state['values']['type'] .'_restrictions', $fields);
+  variable_set('uc_node_checkout_' . $form_state['values']['type'] .'_restrictions', $fields);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderstatus', $form_state['values']['order_status']);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderid', $form_state['values']['order_id']);
+  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_productid', $form_state['values']['product_id']);
 
   $form_state['redirect'] = 'admin/store/settings/node-checkout';
 }
 
-// Displays the settings form for node checkout behavior/display settings.
+
+/**
+ * Displays the settings form for node checkout behavior/display settings.
+ */
 function uc_node_checkout_settings_form() {
   $form = array();
 
@@ -317,7 +338,10 @@ function uc_node_checkout_settings_form() {
   return system_settings_form($form);
 }
 
-// Returns an autocomplete list for nodes on the node type settings form.
+
+/**
+ * Returns an autocomplete list for nodes on the node type settings form.
+ */
 function uc_node_checkout_autocomplete($string = '') {
   $matches = array();
 
