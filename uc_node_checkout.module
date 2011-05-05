@@ -449,7 +449,10 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
  */
 function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   // Display a message so the customer isn't totally confused.
-  drupal_set_message(t('This product requires some additional information.'));
+  $msg = t(variable_get('uc_node_checkout_'. $form_state['values']['node_type'] .'_message', t('This product requires some additional information.')));
+  if ($msg != '<none>'){
+    drupal_set_message(check_plain($msg));
+  }
 
   $get = array('product_nid='. $form_state['values']['nid']);
 

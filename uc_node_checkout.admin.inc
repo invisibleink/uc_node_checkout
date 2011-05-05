@@ -68,6 +68,13 @@ function uc_node_checkout_type_form(&$form_state, $type) {
     '#autocomplete_path' => 'uc_node_checkout/autocomplete',
   );
 
+  $form['product_message'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Require additional information message'),
+    '#description' => t('The add to cart will display this message when redirecting to a node. Set to &lt;none&gt; to remove the message.'),
+    '#default_value' => variable_get('uc_node_checkout_'. $type->type .'_message', t('This product requires some additional information.')),
+  );
+
   if (module_exists('views')) {
     $views = array();
 
@@ -183,6 +190,7 @@ function uc_node_checkout_type_form_submit($form, &$form_state) {
   }
 
   variable_set('uc_node_checkout_' . $form_state['values']['type'] .'_restrictions', $fields);
+  variable_set('uc_node_checkout_' . $form_state['values']['type'] .'_message', $form_state['values']['product_message']);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderstatus', $form_state['values']['order_status']);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderid', $form_state['values']['order_id']);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_productid', $form_state['values']['product_id']);
