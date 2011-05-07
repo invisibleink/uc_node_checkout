@@ -1092,7 +1092,7 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
             array(
               '%product_title' => $product->title,
               '%product_model' => $product->model,
-              '!create_now_link' => l(t('Create node association'), 'node/add/' . $association_node_type,
+              '!create_now_link' => l(t('Create node association'), 'node/add/' . str_replace('_', '-', $association_node_type),
                 array('query' => array('order_id' => $order->order_id, 'product_id' => $product->nid, 'order_product_id' => $product->order_product_id))),
             )
           );
