@@ -478,6 +478,19 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
     $get[] = 'qty='. intval($form_state['values']['qty']);
   }
 
+  // If uc_varprice module is used, pass the user-entered price via session variable
+  if (!empty($form_state['values']['varprice']) && floatval($form_state['values']['varprice']) > 0) {
+    $price = preg_replace("/[^0-9.,]+/","",$form_state['values']['varprice']);  // clean up user-entered price data
+    if (!empty($price) && intval($price) > 0) {
+      if(substr($price, -3, 1) == ",") {  // accept comma as decimal delimiter, and convert to period.
+        $price = preg_replace("/[.,]+/", "", $price);
+        $price = substr_replace($price, ".", -2, 0);
+      }
+      $price = str_replace(",", "", $price);
+      $_SESSION['varprice'] = round(floatval($price), 2);
+    }
+  }
+
   // Pass the attributes selections in the URL.
   $attr = array();
 
@@ -624,6 +637,12 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
           'nid' => $product->nid,
           'qty' => $product->default_qty,
         );
+
+        // Add uc_varprice compatibility
+        if (module_exists(uc_varprice) && (isset($_SESSION['varprice']))) {
+          $values['varprice'] = floatval($_SESSION['varprice']);
+          unset($_SESSION['varprice']);
+        }
 
         // Add any attribute values if they exist.
         if (isset($node->attributes)) {
