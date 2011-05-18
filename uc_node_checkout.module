@@ -532,7 +532,18 @@ function uc_node_checkout_product_select_form($form_state, $type) {
 
   // Loop through the query results and add options for the select list.
   while ($node = db_fetch_object($result)) {
-    $options[$node->nid] = check_plain($node->node_title);
+    // If the view includes the product's price,
+    // display that in the list of options.
+    if (isset($node->uc_products_sell_price)) {
+      $context = array(
+        'revision' => 'formatted',
+        'type' => 'product',
+        'class' => array('product', $node->uc_products_sell_price),
+        'field' => $node->uc_products_sell_price,
+      );
+      $price = ' - '. uc_price($node->uc_products_sell_price, $context);
+    }
+    $options[$node->nid] = check_plain($node->node_title) . $price;
   }
 
   // If no nodes were found but a single nid was specified...
