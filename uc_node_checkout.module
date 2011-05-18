@@ -1163,6 +1163,27 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
 
 
 /**
+ * Implements hook_node_type().
+ */
+function uc_node_checkout_node_type($op, $info) {
+  switch ($op) {
+    case 'update':
+      // Make sure CCK changes to type names are reflected in our types table
+      if ($info->type != $info->old_type) {
+        if ($type = db_result(db_query("SELECT node_type from {uc_node_checkout_types} WHERE node_type = '%s'", $info->old_type))) {
+          db_query("UPDATE {uc_node_checkout_types} SET node_type = '%s' WHERE node_type = '%s'", $info->type, $info->old_type);
+          drupal_set_message(t("Updated <em>uc_node_checkout</em> node types."));
+        }
+      }
+      break;
+    case 'delete':
+      db_query("DELETE FROM {uc_node_checkout_types} WHERE node_type = '%s'", $info->type);
+      break;
+  }
+}
+
+
+/**
  * Themes a click to edit link by node checkout products in a customer's cart.
  */
 function theme_uc_cart_click_to_edit($link) {
