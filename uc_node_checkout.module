@@ -440,6 +440,10 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       // Redirect non-administrators to the shopping cart after edits.
       if (variable_get('uc_node_checkout_submit_redirect', TRUE) && !user_access('edit any '. $type .' content')) {
         $form['#redirect'] = variable_get('uc_add_item_redirect', 'cart');
+        // If redirect is <none>, we need to come back to the current page after submit.
+        if ($form['#redirect'] === '<none>') {
+          $form['#redirect'] = request_uri();
+        }
       }
     }
   }
@@ -683,7 +687,11 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
         if (uc_node_checkout_node_associated($node) &&
             !user_access('edit any '. $node->type .' content') &&
             uc_node_checkout_load_cart_item($node->nid)) {
-          drupal_goto(variable_get('uc_add_item_redirect', 'cart'));
+          $path = variable_get('uc_add_item_redirect', 'cart');
+          if ($path === '<none>') {
+            $path = 'cart';
+          }
+          drupal_goto($path);
         }
       }
 
