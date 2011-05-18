@@ -231,7 +231,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       );
 
       // Change the submit handler to use the add to cart redirect handler.
-      $form['submit']['#submit'] = array('uc_node_checkout_add_to_cart_submit');
+      $form['submit']['#submit'][] = 'uc_node_checkout_add_to_cart_submit';
     }
   }
 
