@@ -394,7 +394,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         // If specified, redirect anonymous customers to login.
         if (variable_get('uc_node_checkout_node_access', TRUE) && !$user->uid) {
           drupal_set_message(t('You must login or create a user account to continue.'));
-          $_SESSION['node_checkout_redirect'] = 'node/add/'. str_replace('_', '-', $type);
+          $_SESSION['node_checkout_redirect'] = array('node/add/'. str_replace('_', '-', $type), 'product_nid='.$product_nid);
           drupal_goto('user');
         }
         else {
