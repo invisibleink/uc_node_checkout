@@ -65,6 +65,15 @@ function uc_node_checkout_menu() {
   return $items;
 }
 
+/**
+ * Implementation of hook_views_api().
+ */
+function uc_node_checkout_views_api() {
+  return array(
+    'api' => 2,
+  );
+}
+
 
 /**
  * Determines access to the product selection form for node types associated
