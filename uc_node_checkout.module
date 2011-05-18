@@ -685,7 +685,8 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       // Only save attributes if this node has not been checked out.
       if (empty($node->uc_order_product_id) && isset($node->attributes)) {
         $data = db_result(db_query("SELECT data FROM {uc_cart_products} WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", $node->nid));
-
+        $node->uc_order_product_id = db_result(db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid));
+        $node->ucnc_product_nid = db_result(db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $node->uc_order_product_id));
         $data = unserialize($data);
         $data['attributes'] = $node->attributes;
 
@@ -696,6 +697,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     // Load any saved attributes output from the DB for display on the node.
     case 'load':
       $node->uc_order_product_id = db_result(db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid));
+      $node->ucnc_product_nid = db_result(db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $node->uc_order_product_id));
       break;
 
     // When enabled, deletes nodes from the site when their creators remove the
@@ -1233,3 +1235,66 @@ function theme_uc_node_checkout_node_attributes($product) {
 function theme_uc_node_checkout_restrict_cart_qty_field($element) {
   return check_plain($element['#value']);
 }
+
+/**
+ * Implementation of hook_token_list().
+ */
+function uc_node_checkout_token_list($type = 'all') {
+  if ($type == 'node' || $type == 'product' || $type == 'ubercart' || $type == 'all') {
+    $tokens = array();
+    $tokens['referenced_product']['referenced-title'] = t("The title of the referenced product.");
+    $tokens['referenced_product']['model'] = t("The referenced product's model number.");
+    $tokens['referenced_product']['list_price'] = t("The referenced product's list price.");
+    $tokens['referenced_product']['cost'] = t("The referenced product's cost.");
+    $tokens['referenced_product']['sell_price'] = t("The referenced product's sell price.");
+    $tokens['referenced_product']['weight_units'] = t("The unit of measurement for the referenced product's weight.");
+    $tokens['referenced_product']['weight-raw'] = t("The numerical value of the referenced product's weight.");
+    $tokens['referenced_product']['weight'] = t("The referenced product's formatted weight.");
+    $tokens['referenced_product']['length_units'] = t("The unit of measurement for the referenced product's length, width, and height.");
+    $tokens['referenced_product']['length-raw'] = t("The numerical value of the referenced product's length.");
+    $tokens['referenced_product']['length'] = t("The referenced product's formatted length.");
+    $tokens['referenced_product']['width-raw'] = t("The numerical value of the referenced product's width.");
+    $tokens['referenced_product']['width'] = t("The referenced product's formatted width.");
+    $tokens['referenced_product']['height-raw'] = t("The numerical value of the referenced product's height.");
+    $tokens['referenced_product']['height'] = t("The referenced product's formatted height.");
+    return $tokens;
+  }
+
+}
+
+
+/**
+ * Implementation of hook_token_values().
+ */
+function uc_node_checkout_token_values($type, $object = NULL, $options = array()) {
+  if (uc_node_checkout_node_associated($object)) {
+    // Load up the corresponding product so we can use the default add to
+    // cart quantity.
+    if (!empty($object->ucnc_product_nid)) {
+      $product = node_load($object->ucnc_product_nid);
+    }
+    else {
+      $order_product_id = db_result(db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $object->nid));
+      $nid = db_result(db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $order_product_id));
+      $product = node_load($nid);
+    }
+    $tokens = array();
+    $tokens['referenced-title'] = $product->title;
+    $tokens['model'] = $product->model;
+    $tokens['list_price'] = $product->list_price;
+    $tokens['cost'] = $product->cost;
+    $tokens['sell_price'] = $product->sell_price;
+    $tokens['weight_units'] = $product->weight_units;
+    $tokens['weight-raw'] = $product->weight;
+    $tokens['weight'] = uc_weight_format($product->weight, $product->weight_units);
+    $tokens['length_units'] = $product->length_units;
+    $tokens['length-raw'] = $product->length;
+    $tokens['length'] = uc_length_format($product->length, $product->length_units);
+    $tokens['width-raw'] = $product->width;
+    $tokens['width'] = uc_length_format($product->width, $product->length_units);
+    $tokens['height-raw'] = $product->height;
+    $tokens['height'] = uc_length_format($product->height, $product->length_units);
+    return $tokens;
+  }
+}
+
