@@ -328,9 +328,13 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       if ($value['nid'] && !$value['view']) {
         $product_nid = $value['nid'];
       }
-      elseif ($_GET['product_nid']) {
+      elseif (!empty($_GET['product_nid'])) {
         // Otherwise look in the $_GET array.
         $product_nid = $_GET['product_nid'];
+      }
+      elseif (!empty($_POST['ucnc_product_nid'])) {
+        // Try the $_POST array (for rebuilding a node via AHAH)
+        $product_nid = $_POST['ucnc_product_nid'];
       }
       elseif (empty($form['nid']['#value']) && !$form['#programmed']) {
         // If none was found, we must ask the user to specify one.
