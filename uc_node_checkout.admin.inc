@@ -235,7 +235,7 @@ function uc_node_checkout_settings_form() {
   );
   $form['behavior']['uc_node_checkout_delete_orphans'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Delete products associated with nodes from shopping carts when the nodes are deleted.'),
+    '#title' => t('Remove product from shopping cart when the associated node_checkout node is deleted.'),
     '#default_value' => variable_get('uc_node_checkout_delete_orphans', TRUE),
   );
   $form['behavior']['uc_node_checkout_delete_nodes'] = array(

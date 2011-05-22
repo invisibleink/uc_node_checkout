@@ -240,7 +240,19 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'uc_cart_view_form') {
     $items = uc_cart_get_contents();
     $i = 0;
-    foreach ($items as $item) {
+
+    // Check for any items being removed from the cart
+    $deleted_items = array();
+    if (!empty($form_state['post'])) {
+      foreach(array_keys($form_state['post']) as $key) {
+        if (substr($key, 0, 7) === 'remove-') {
+          $deleted_items[] = (int) substr($key, 7);
+        }
+      }
+    }
+
+    // Update the item display (quantity, title, click to edit)
+    foreach ($items as $i => $item) {
       if (isset($item->checkout_node)) {
         $node = $item->checkout_node;
 
@@ -249,7 +261,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
         // Update the title if configured based on user access.
         if (variable_get('uc_node_checkout_cart_titles', TRUE) || variable_get('uc_node_checkout_click_to_edit', TRUE)) {
-          if (node_access('update', $node)) {
+          if (!in_array($i, $deleted_items) && node_access('update', $node)) {
             if (variable_get('uc_node_checkout_cart_titles', TRUE)) {
               $title = l($item->title, 'node/'. $node->nid .'/edit', array('query' => 'destination=cart'));
               $click = t('(click to edit)');
@@ -276,7 +288,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
           if (variable_get('uc_node_order_product_teaser_override', FALSE)) {
             $list = array(
               token_replace(variable_get('uc_node_order_product_attribute', 'ID'), 'node', $node) .': '
-            . token_replace(variable_get('uc_node_order_product_option', '[nid] - [title]'), 'node', $node),
+              . token_replace(variable_get('uc_node_order_product_option', '[nid] - [title]'), 'node', $node),
             );
             $teaser = theme('item_list', $list, NULL, 'ul', array('class' => 'uc-node-cart-teaser'));
           }
