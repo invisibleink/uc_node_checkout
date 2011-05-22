@@ -904,7 +904,9 @@ function uc_node_checkout_order($op, &$arg1, $arg2) {
             $node = node_load($arg1->products[$i]->data['node_checkout_nid']);
 
             if ($node) {
-              $arg1->products[$i]->data['attributes'][token_replace($attribute, 'node', $node)] = token_replace($option, 'node', $node);
+              $attr_value = html_entity_decode(token_replace($option, 'node', $node), ENT_QUOTES);
+              $attr_key = token_replace($attribute, 'node', $node);
+              $arg1->products[$i]->data['attributes'][$attr_key] = $attr_value;
 
               // Update the CCK fields
               uc_node_checkout_update_content_fields($arg1->products[$i], $node, $arg1);
@@ -1148,7 +1150,7 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
                          array('@product_title' => $product->title,
                                '@product_model' => $product->model,
                                '@node_checkout_title' => $node_checkout_node->title)),
-              'node/'. $node_checkout_node->nid);
+              'node/'. $node_checkout_node->nid, array('html'=>TRUE));
         }
 
         // Create a row for should-be customised products
