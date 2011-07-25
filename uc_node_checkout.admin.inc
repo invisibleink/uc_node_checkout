@@ -5,6 +5,7 @@
  * Defines administration pages for the node checkout module.
  */
 
+
 /**
  * Displays the node checkout settings table/form.
  */
@@ -162,7 +163,7 @@ function uc_node_checkout_type_form(&$form_state, $type) {
 
 
 /**
- *
+ * Submit handler for uc_node_checkout_type_form().
  */
 function uc_node_checkout_type_form_submit($form, &$form_state) {
   // Save the product node ID.
