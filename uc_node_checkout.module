@@ -745,7 +745,8 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     // governed by UC Node Checkout that hasn't been checked out yet.
     case 'view':
       // Skip this whole block of code if this setting isn't enabled.
-      if (variable_get('uc_node_checkout_view_redirect', TRUE) && $arg4 === TRUE) {
+      if (variable_get('uc_node_checkout_view_redirect', TRUE) &&
+          $arg4 === TRUE) {
         if (uc_node_checkout_node_associated($node) &&
             !user_access('edit any '. $node->type .' content') &&
             uc_node_checkout_load_cart_item($node->nid)) {
