@@ -11,7 +11,7 @@
  */
 function uc_node_checkout_admin() {
   $nc_map = uc_node_checkout_product_map();
-  $types = node_get_types('types');
+  $types = node_type_get_types();
   $rows = array();
 
   $header = array(t('Node type'), t('Product'), t('View'), t('Actions'));
@@ -45,13 +45,13 @@ function uc_node_checkout_admin() {
 /**
  * Displays the form to map a product to a node type.
  */
-function uc_node_checkout_type_form(&$form_state, $type) {
+function uc_node_checkout_type_form($form, &$form_state, $type) {
   $nc_map = uc_node_checkout_product_map();
   $form = array();
 
   $options = array(0 => t('<None>'));
 
-  $result = db_query("SELECT n.nid, p.model, n.title FROM {uc_products} AS p INNER JOIN {node} AS n ON p.vid = n.vid ORDER BY p.model");
+  $result = db_query('SELECT n.nid, p.model, n.title FROM {uc_products} AS p INNER JOIN {node} AS n ON p.vid = n.vid ORDER BY p.model');
   while ($product = $result->fetchObject()) {
     $options[$product->nid] = '(' . $product->model . ') ' . $product->title;
   }
@@ -174,7 +174,9 @@ function uc_node_checkout_type_form_submit($form, &$form_state) {
     }
   }
   else {
-    db_query("DELETE FROM {uc_node_checkout_types} WHERE node_type = '%s'", $form_state['values']['type']);
+    db_delete('uc_node_checkout_types')
+      ->condition('node_type', $form_state['values']['type'])
+      ->execute();
   }
 
   // Save the restricted fields settings.
@@ -360,12 +362,20 @@ function uc_node_checkout_autocomplete($string = '') {
   $matches = array();
 
   if ($string) {
-    $result = db_query_range("SELECT n.nid, n.title, p.model, p.unique_hash FROM {uc_products} AS p LEFT JOIN {node} AS n ON n.nid = p.nid WHERE p.unique_hash != '' AND (LOWER(n.title) LIKE '%s%%' OR LOWER(p.model) LIKE '%s%%')", strtolower($string), strtolower($string), 0, 10);
-    while ($node = $result->fetchObject()) {
+    $query = db_select('uc_products', 'p');
+    $query->join('node', 'n', 'p.nid = n.nid');
+    $query
+      ->fields('n', array('nid', 'title'))
+      ->fields('p', array('model', 'unique_hash'))
+      ->where("p.unique_hash <> ''")
+      ->where("LOWER(n.title) LIKE :title OR LOWER(p.model) LIKE :title", array(':title' => '%' . db_like(strtolower($string)) . '%'))
+      ->range(0, 10);
+    $result = $query->execute();
+    
+    foreach ($result as $node) {
       $matches[$node->nid] = t('@title [@sku]', array('@title' => $node->title, '@sku' => $node->model));
     }
   }
 
-  print drupal_to_js($matches);
-  exit();
+  drupal_json_output($matches);
 }

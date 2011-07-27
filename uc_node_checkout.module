@@ -89,7 +89,7 @@ function uc_node_checkout_product_select_access($type) {
  *
  */
 function uc_node_checkout_type_load($arg) {
-  $types = node_get_types('types');
+  $types = node_type_get_types();
   foreach ($types as $type) {
     if ($type->type == $arg) {
       return $type;
@@ -718,7 +718,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     case 'update':
       // Only save attributes if this node has not been checked out.
       if (empty($node->uc_order_product_id) && isset($node->attributes)) {
-        $data = db_query("SELECT data FROM {uc_cart_products} WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", $node->nid)->fetchField();
+        $data = db_query("SELECT data FROM {uc_cart_products} WHERE data LIKE :nid", array(':nid' => '%\"node_checkout_nid\";i:' . $node->nid . ';%'))->fetchField();
         $node->uc_order_product_id = db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid)->fetchField();
         $node->ucnc_product_nid = db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $node->uc_order_product_id)->fetchField();
         $data = unserialize($data);
@@ -728,7 +728,6 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
           ->fields(array(
             'data' => serialize($data),
           ))
-         // ->condition('data',  SET data = '%s' WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", serialize($data), $node->nid);
           ->condition('data', '%' . db_like('"node_checkout_nid";i:' . $node->nid . ';') . '%', 'LIKE')
           ->execute();
       }
@@ -746,7 +745,9 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       // Skip this whole block of code if we're not supposed to delete orphans.
       if (variable_get('uc_node_checkout_delete_orphans', TRUE)) {
         if (uc_node_checkout_node_associated($node)) {
-          db_query("DELETE FROM {uc_cart_products} WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", $node->nid);
+          db_delete('uc_cart_products')
+            ->condition('data', '%' . db_like('"node_checkout_nid";i:' . $node->nid . ';') . '%', 'LIKE')
+            ->execute();
           if (db_affected_rows()) {
             // Display a message here if necessary.
           }
