@@ -831,7 +831,8 @@ function uc_node_checkout_cart_item($op, &$item) {
     case 'can_ship':
       // Look at the default $item settings to determine if there is a
       // shippable component to this node checkout product
-      if ($uc_node_checkout_product = node_load($item->data['nid'])) {
+      if (isset($item->data['nid']) &&
+          $uc_node_checkout_product = node_load($item->data['nid'])) {
         // If the item was set to be 'shippable' on the node edit form of the
         // uc_node_checkout product, not the associated node to purchase, then
         // we'll send this off to Ubercart as a 'shippable' item and Ubercart
@@ -979,7 +980,7 @@ function uc_node_checkout_product_map($type = '') {
   }
 
   // If we passed in a node type, return that node type's product nid.
-  if (!empty($type)) {
+  if (!empty($type) && isset($nc_map[$type])) {
     return $nc_map[$type];
   }
 
@@ -998,7 +999,8 @@ function uc_node_checkout_product_map($type = '') {
  */
 function uc_node_checkout_node_associated($node) {
   // Return TRUE if a product node has been associated to this node type.
-  if ($nc_map = uc_node_checkout_product_map($node->type)) {
+  if (isset($node->type) && 
+      $nc_map = uc_node_checkout_product_map($node->type)) {
     if ($nc_map['nid'] || $nc_map['view']) {
       return TRUE;
     }
