@@ -7,24 +7,6 @@
 
 
 /**
- * Implements hook_install().
- */
-function uc_node_checkout_install() {
-  // Create tables.
-  drupal_install_schema('uc_node_checkout');
-}
-
-
-/**
- * Implements hook_uninstall().
- */
-function uc_node_checkout_uninstall() {
-  // Remove tables.
-  drupal_uninstall_schema('uc_node_checkout');
-}
-
-
-/**
  * Implements hook_schema().
  */
 function uc_node_checkout_schema() {
@@ -77,6 +59,15 @@ function uc_node_checkout_schema() {
   );
 
   return $schema;
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function uc_node_checkout_uninstall() {
+  // Remove all module variables from the database
+  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_node_checkout_%%'");
 }
 
 

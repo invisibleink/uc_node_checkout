@@ -19,7 +19,7 @@ function uc_node_checkout_admin() {
   // Loop through all the node types on the site.
   foreach ($types as $type => $info) {
     // Look for a product node association.
-    if ($nc_map[$type]['nid']) {
+    if (isset($nc_map[$type])) {
       $product = node_load($nc_map[$type]['nid']);
     }
     else {
@@ -27,18 +27,18 @@ function uc_node_checkout_admin() {
     }
 
     // Look for a View association.
-    $view = variable_get('uc_node_checkout_'. $type .'_view', '');
+    $view = variable_get('uc_node_checkout_' . $type . '_view', '');
 
     // Add the node type's data to the table.
     $rows[] = array(
       $info->name,
-      $product ? l($product->model, 'node/'. $product->nid) : t('n/a'),
-      $nc_map[$type]['view'] ? check_plain($nc_map[$type]['view']) : t('n/a'),
-      l(t('edit'), 'admin/store/settings/node-checkout/'. $type),
+      $product ? l($product->model, 'node/' . $product->nid) : t('n/a'),
+      isset($nc_map[$type]['view']) ? check_plain($nc_map[$type]['view']) : t('n/a'),
+      l(t('edit'), 'admin/store/settings/node-checkout/' . $type),
     );
   }
 
-  return theme('table', $header, $rows);
+  return theme('table', array('header' => $header, 'rows' => $rows));
 }
 
 
@@ -52,8 +52,8 @@ function uc_node_checkout_type_form(&$form_state, $type) {
   $options = array(0 => t('<None>'));
 
   $result = db_query("SELECT n.nid, p.model, n.title FROM {uc_products} AS p INNER JOIN {node} AS n ON p.vid = n.vid ORDER BY p.model");
-  while ($product = db_fetch_object($result)) {
-    $options[$product->nid] = '('. $product->model .') '. $product->title;
+  while ($product = $result->fetchObject()) {
+    $options[$product->nid] = '(' . $product->model . ') ' . $product->title;
   }
 
   $form['type'] = array(
@@ -73,7 +73,7 @@ function uc_node_checkout_type_form(&$form_state, $type) {
     '#type' => 'textfield',
     '#title' => t('Require additional information message'),
     '#description' => t('The add to cart will display this message when redirecting to a node. Set to &lt;none&gt; to remove the message.'),
-    '#default_value' => variable_get('uc_node_checkout_'. $type->type .'_message', t('This product requires some additional information.')),
+    '#default_value' => variable_get('uc_node_checkout_' . $type->type . '_message', t('This product requires some additional information.')),
   );
 
   if (module_exists('views')) {
@@ -84,7 +84,7 @@ function uc_node_checkout_type_form(&$form_state, $type) {
       // Only include node Views.
       if ($view_value->base_table == 'node') {
         foreach ($view_value->display as $display_key => $display_value) {
-          $views[$view_key .'|'. $display_key] = check_plain($view_key .': '. $display_value->display_title);
+          $views[$view_key . '|' . $display_key] = check_plain($view_key . ': ' . $display_value->display_title);
         }
       }
     }
@@ -98,7 +98,7 @@ function uc_node_checkout_type_form(&$form_state, $type) {
     );
   }
 
-  $restrictions = variable_get('uc_node_checkout_'. $type->type .'_restrictions', array());
+  $restrictions = variable_get('uc_node_checkout_' . $type->type . '_restrictions', array());
 
   $form['disable_preview'] = array(
     '#type' => 'checkbox',
@@ -190,8 +190,8 @@ function uc_node_checkout_type_form_submit($form, &$form_state) {
     $fields[] = 'preview';
   }
 
-  variable_set('uc_node_checkout_' . $form_state['values']['type'] .'_restrictions', $fields);
-  variable_set('uc_node_checkout_' . $form_state['values']['type'] .'_message', $form_state['values']['product_message']);
+  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_restrictions', $fields);
+  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_message', $form_state['values']['product_message']);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderstatus', $form_state['values']['order_status']);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderid', $form_state['values']['order_id']);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_productid', $form_state['values']['product_id']);
@@ -341,7 +341,8 @@ function uc_node_checkout_settings_form() {
     '#collapsed' => TRUE,
   );
   $form['display_order']['tokens']['data'] = array(
-    '#value' => '<div>'. theme('token_help', 'node') .'</div>',
+    '#type' => 'markup',
+    '#markup' => '<div>' . theme('token_help', 'node') . '</div>',
   );
 
   return system_settings_form($form);
@@ -356,7 +357,7 @@ function uc_node_checkout_autocomplete($string = '') {
 
   if ($string) {
     $result = db_query_range("SELECT n.nid, n.title, p.model, p.unique_hash FROM {uc_products} AS p LEFT JOIN {node} AS n ON n.nid = p.nid WHERE p.unique_hash != '' AND (LOWER(n.title) LIKE '%s%%' OR LOWER(p.model) LIKE '%s%%')", strtolower($string), strtolower($string), 0, 10);
-    while ($node = db_fetch_object($result)) {
+    while ($node = $result->fetchObject()) {
       $matches[$node->nid] = t('@title [@sku]', array('@title' => $node->title, '@sku' => $node->model));
     }
   }

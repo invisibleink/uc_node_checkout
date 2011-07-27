@@ -81,7 +81,7 @@ function uc_node_checkout_views_api() {
  * with Views.
  */
 function uc_node_checkout_product_select_access($type) {
-  return module_exists('views') ? user_access('create '. $type .' content') : FALSE;
+  return module_exists('views') ? user_access('create ' . $type . ' content') : FALSE;
 }
 
 
@@ -132,16 +132,16 @@ function uc_node_checkout_help($path, $arg) {
 function uc_node_checkout_theme() {
   return array(
     'uc_cart_click_to_edit' => array(
-      'arguments' => array($link = ''),
+      'variables' => array($link = ''),
     ),
     'uc_node_cart_teaser' => array(
-      'arguments' => array('node' => NULL),
+      'variables' => array('node' => NULL),
     ),
     'uc_node_checkout_node_attributes' => array(
-      'arguments' => array(),
+      'variables' => array(),
     ),
     'uc_node_checkout_restrict_cart_qty_field' => array(
-      'arguments' => array('form' => NULL),
+      'variables' => array('form' => NULL),
     ),
   );
 }
@@ -152,11 +152,17 @@ function uc_node_checkout_theme() {
  */
 function uc_node_checkout_enable() {
   // Get the weight of the cart module.
-  $weight = db_result(db_query("SELECT weight FROM {system} WHERE name = 'uc_cart' AND type = 'module'"));
+  $weight = db_query("SELECT weight FROM {system} WHERE name = 'uc_cart' AND type = 'module'")->fetchField();
 
   // Set this module's weight to the cart module's + 100 to make sure its hooks
   // are invoked in the right order.
-  db_query("UPDATE {system} SET weight = %d WHERE name = 'uc_node_checkout' AND type = 'module'", $weight + 100);
+  db_update('system')
+    ->fields(array(
+      'weight' => $weight + 100,
+    ))
+    ->condition('name', 'uc_node_checkout')
+    ->condition('type', 'module')
+    ->execute();
 }
 
 
@@ -266,17 +272,17 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             variable_get('uc_node_checkout_click_to_edit', TRUE)) {
           if (!in_array($i, $deleted_items) && node_access('update', $node)) {
             if (variable_get('uc_node_checkout_cart_titles', TRUE)) {
-              $title = l($item->title, 'node/'. $node->nid .'/edit', array('query' => 'destination=cart'));
+              $title = l($item->title, 'node/' . $node->nid . '/edit', array('query' => 'destination=cart'));
               $click = t('(click to edit)');
             }
             else {
               $title = $form['items'][$i]['title']['#value'];
-              $click = ' - '. l(t('edit'), 'node/'. $node->nid .'/edit', array('query' => 'destination=cart'));
+              $click = ' - ' . l(t('edit'), 'node/' . $node->nid . '/edit', array('query' => 'destination=cart'));
             }
 
             // Add the click to edit link to the title if necessary.
             if (variable_get('uc_node_checkout_click_to_edit', TRUE)) {
-              $title .= ' '. theme('uc_cart_click_to_edit', $click);
+              $title .= ' ' . theme('uc_cart_click_to_edit', $click);
             }
           }
           else {
@@ -290,7 +296,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         if (variable_get('uc_node_cart_teaser', TRUE)) {
           if (variable_get('uc_node_order_product_teaser_override', FALSE)) {
             $list = array(
-              token_replace(variable_get('uc_node_order_product_attribute', 'ID'), 'node', $node) .': '
+              token_replace(variable_get('uc_node_order_product_attribute', 'ID'), 'node', $node) . ': '
               . token_replace(variable_get('uc_node_order_product_option', '[nid] - [title]'), 'node', $node),
             );
             $teaser = theme('item_list', $list, NULL, 'ul', array('class' => 'uc-node-cart-teaser'));
@@ -337,7 +343,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
   // Alter the node forms for UC Node Checkout governed node types.
   foreach (uc_node_checkout_product_map() as $type => $value) {
-    if ($form_id == $type .'_node_form') {
+    if ($form_id == $type . '_node_form') {
       // Determine the product nid that will be added to the cart when this
       // node is created.  First look for a single product node association.
       if ($value['nid'] && !$value['view']) {
@@ -353,7 +359,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       }
       elseif (empty($form['nid']['#value']) && !$form['#programmed']) {
         // If none was found, we must ask the user to specify one.
-        drupal_goto('ucnc-select/'. $type);
+        drupal_goto('ucnc-select/' . $type);
       }
 
       // If specified, put the default qty. in a hidden field.
@@ -413,7 +419,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         // If specified, redirect anonymous customers to login.
         if (variable_get('uc_node_checkout_node_access', TRUE) && !$user->uid) {
           drupal_set_message(t('You must login or create a user account to continue.'));
-          $_SESSION['node_checkout_redirect'] = array('node/add/'. str_replace('_', '-', $type), 'product_nid='.$product_nid);
+          $_SESSION['node_checkout_redirect'] = array('node/add/' . str_replace('_', '-', $type), 'product_nid='.$product_nid);
           drupal_goto('user');
         }
         else {
@@ -443,9 +449,9 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       }
 
       // Remove restricted fields for users without access.
-      $fields = variable_get('uc_node_checkout_'. $type .'_restrictions', array());
+      $fields = variable_get('uc_node_checkout_' . $type . '_restrictions', array());
 
-      if (!empty($fields) && !user_access('edit any '. $type .' content')) {
+      if (!empty($fields) && !user_access('edit any ' . $type . ' content')) {
         foreach ($fields as $field) {
           if ($field == 'preview') {
             $form['buttons']['preview']['#access'] = FALSE;
@@ -458,7 +464,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
       // Redirect non-administrators to the shopping cart after edits.
       if (variable_get('uc_node_checkout_submit_redirect', TRUE) &&
-          !user_access('edit any '. $type .' content')) {
+          !user_access('edit any ' . $type . ' content')) {
         $form['#redirect'] = variable_get('uc_add_item_redirect', 'cart');
         // If redirect is <none>, we need to come back to the current
         // page after submit.
@@ -484,17 +490,17 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
  */
 function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   // Display a message so the customer isn't totally confused.
-  $msg = t(variable_get('uc_node_checkout_'. $form_state['values']['node_type'] .'_message', t('This product requires some additional information.')));
+  $msg = t(variable_get('uc_node_checkout_' . $form_state['values']['node_type'] . '_message', t('This product requires some additional information.')));
   if ($msg != '<none>'){
     drupal_set_message(check_plain($msg));
   }
 
-  $get = array('product_nid='. $form_state['values']['nid']);
+  $get = array('product_nid=' . $form_state['values']['nid']);
 
   // Pass the qty. if specified.
   if (!empty($form_state['values']['qty']) &&
       intval($form_state['values']['qty']) > 0) {
-    $get[] = 'qty='. intval($form_state['values']['qty']);
+    $get[] = 'qty=' . intval($form_state['values']['qty']);
   }
 
   // If uc_varprice module is used, pass the user-entered price via session variable
@@ -519,15 +525,15 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
     if ($form['attributes'][$aid]['#type'] == 'checkboxes') {
       $oid = implode('|', $oid);
     }
-    $attr[] = $aid .'-'. $oid;
+    $attr[] = $aid . '-' . $oid;
   }
 
   if (!empty($attr)) {
-    $get[] = 'attr='. implode('_', $attr);
+    $get[] = 'attr=' . implode('_', $attr);
   }
 
   // Redirect to the node add form.
-  $form['#redirect'] = array('node/add/'. str_replace('_', '-', $form_state['values']['node_type']), implode('&', $get));
+  $form['#redirect'] = array('node/add/' . str_replace('_', '-', $form_state['values']['node_type']), implode('&', $get));
 }
 
 
@@ -552,7 +558,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
   if (!$view || !isset($view->display[$view_display])) {
     // Redirect to the node add form if a product NID is associated.
     if ($nc_map['nid']) {
-      drupal_goto('node/add/'. str_replace('_', '-', $type), 'product_nid='. $nc_map['nid']);
+      drupal_goto('node/add/' . str_replace('_', '-', $type), 'product_nid=' . $nc_map['nid']);
     }
     else {
       // We're outta luck...
@@ -572,7 +578,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
   }
 
   // Loop through the query results and add options for the select list.
-  while ($node = db_fetch_object($result)) {
+  while ($node = $result->fetchObject()) {
     // If the view includes the product's price,
     // display that in the list of options.
     if (isset($node->uc_products_sell_price)) {
@@ -582,7 +588,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
         'class' => array('product', $node->uc_products_sell_price),
         'field' => $node->uc_products_sell_price,
       );
-      $price = ' - '. uc_price($node->uc_products_sell_price, $context);
+      $price = ' - ' . uc_price($node->uc_products_sell_price, $context);
     }
     $options[$node->nid] = check_plain($node->node_title) . $price;
   }
@@ -591,7 +597,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
   if (empty($options) && $nc_map['nid']) {
     // Redirect to the node add form if a product NID is associated.
     if ($nc_map['nid']) {
-      drupal_goto('node/add/'. str_replace('_', '-', $type), 'product_nid='. $nc_map['nid']);
+      drupal_goto('node/add/' . str_replace('_', '-', $type), 'product_nid=' . $nc_map['nid']);
     }
     else {
       // We're outta luck...
@@ -627,7 +633,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
  * @see uc_node_checkout_product_select_form()
  */
 function uc_node_checkout_product_select_form_submit($form, &$form_state) {
-  drupal_goto('node/add/'. str_replace('_', '-', $form_state['values']['type']), 'product_nid='. $form_state['values']['product_nid']);
+  drupal_goto('node/add/' . str_replace('_', '-', $form_state['values']['type']), 'product_nid=' . $form_state['values']['product_nid']);
 }
 
 
@@ -710,20 +716,26 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     case 'update':
       // Only save attributes if this node has not been checked out.
       if (empty($node->uc_order_product_id) && isset($node->attributes)) {
-        $data = db_result(db_query("SELECT data FROM {uc_cart_products} WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", $node->nid));
-        $node->uc_order_product_id = db_result(db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid));
-        $node->ucnc_product_nid = db_result(db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $node->uc_order_product_id));
+        $data = db_query("SELECT data FROM {uc_cart_products} WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", $node->nid)->fetchField();
+        $node->uc_order_product_id = db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid)->fetchField();
+        $node->ucnc_product_nid = db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $node->uc_order_product_id)->fetchField();
         $data = unserialize($data);
         $data['attributes'] = $node->attributes;
 
-        db_query("UPDATE {uc_cart_products} SET data = '%s' WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", serialize($data), $node->nid);
+        db_update('uc_cart_products')
+          ->fields(array(
+            'data' => serialize($data),
+          ))
+         // ->condition('data',  SET data = '%s' WHERE data LIKE '%%\"node_checkout_nid\";i:%d;%%'", serialize($data), $node->nid);
+          ->condition('data', '%' . db_like('"node_checkout_nid";i:' . $node->nid . ';') . '%', 'LIKE')
+          ->execute();
       }
       break;
 
     // Load any saved attributes output from the DB for display on the node.
     case 'load':
-      $node->uc_order_product_id = db_result(db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid));
-      $node->ucnc_product_nid = db_result(db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $node->uc_order_product_id));
+      $node->uc_order_product_id = db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid)->fetchField();
+      $node->ucnc_product_nid = db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $node->uc_order_product_id)->fetchField();
       break;
 
     // When enabled, deletes nodes from the site when their creators remove the
@@ -738,7 +750,9 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
           }
         }
       }
-      db_query("DELETE FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid);
+      db_delete('uc_node_checkout_order_products')
+        ->condition('nid', $node->nid)
+        ->execute();
       break;
 
     // When enabled, redirects users to their cart when they try to view a node
@@ -748,7 +762,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       if (variable_get('uc_node_checkout_view_redirect', TRUE) &&
           $arg4 === TRUE) {
         if (uc_node_checkout_node_associated($node) &&
-            !user_access('edit any '. $node->type .' content') &&
+            !user_access('edit any ' . $node->type . ' content') &&
             uc_node_checkout_load_cart_item($node->nid)) {
           $path = variable_get('uc_add_item_redirect', 'cart');
           if ($path === '<none>') {
@@ -761,7 +775,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       // Add any existing attribute text to the node on a full pageview.
       $show_attributes = variable_get('uc_node_checkout_show_original_attributes', TRUE);
       if ($show_attributes && $arg4 === TRUE && !empty($node->uc_order_product_id)) {
-        drupal_add_css(drupal_get_path('module', 'uc_node_checkout') .'/uc_node_checkout.css');
+        drupal_add_css(drupal_get_path('module', 'uc_node_checkout') . '/uc_node_checkout.css');
 
         // Load the product from the order.
         $product = uc_node_checkout_load_order_product($node->uc_order_product_id);
@@ -779,9 +793,9 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
       // Link node to the corresponding order
       global $user;
       if (isset($node->uc_order_product_id) && $node->uc_order_product_id && (user_access('view all orders') || (user_access('view own orders') && $node->uid == $user->uid))) {
-        $result = db_fetch_array(db_query('SELECT {uc_order_products}.order_id, {uc_orders}.uid FROM {uc_order_products},{uc_orders} WHERE order_product_id = %d AND {uc_orders}.order_id = {uc_order_products}.order_id', $node->uc_order_product_id));
+        $result = db_query('SELECT {uc_order_products}.order_id, {uc_orders}.uid FROM {uc_order_products},{uc_orders} WHERE order_product_id = %d AND {uc_orders}.order_id = {uc_order_products}.order_id', $node->uc_order_product_id)->fetchAssoc();
         $node->content['uc_node_checkout_order'] = array(
-          '#value' => '<span class="uc-node-checkout-order-link">'. l(t('Order @order_id', array('@order_id' => $result['order_id'])), 'user/'. $result['uid'] .'/order/'. $result['order_id']) .'</span>',
+          '#value' => '<span class="uc-node-checkout-order-link">' . l(t('Order @order_id', array('@order_id' => $result['order_id'])), 'user/' . $result['uid'] . '/order/' . $result['order_id']) . '</span>',
           '#weight' => 10,
         );
       }
@@ -959,7 +973,7 @@ function uc_node_checkout_product_map($type = '') {
   if (empty($nc_map)) {
     $result = db_query("SELECT node_type, product_nid, node_view FROM {uc_node_checkout_types}");
 
-    while ($nc_type = db_fetch_array($result)) {
+    while ($nc_type = $result->fetchAssoc()) {
       $nc_map[$nc_type['node_type']] = array('nid' => $nc_type['product_nid'], 'view' => $nc_type['node_view']);
     }
   }
@@ -1037,7 +1051,7 @@ function uc_node_checkout_node_type_association($product_nid) {
 
         // Loop through the query results and return the current node type if
         // we find an nid match.
-        while ($node = db_fetch_object($result)) {
+        while ($node = $result->fetchObject()) {
           if ($node->nid == $product_nid) {
             return $type;
           }
@@ -1178,7 +1192,7 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
                          array('@product_title' => $product->title,
                                '@product_model' => $product->model,
                                '@node_checkout_title' => $node_checkout_node->title)),
-              'node/'. $node_checkout_node->nid, array('html'=>TRUE));
+              'node/' . $node_checkout_node->nid, array('html'=>TRUE));
         }
 
         // Create a row for should-be customised products
@@ -1231,7 +1245,7 @@ function uc_node_checkout_node_type($op, $info) {
  * Themes a click to edit link by node checkout products in a customer's cart.
  */
 function theme_uc_cart_click_to_edit($link) {
-  return '<span class="node-checkout-edit">'. $link .'</span>';
+  return '<span class="node-checkout-edit">' . $link . '</span>';
 }
 
 
@@ -1240,7 +1254,7 @@ function theme_uc_cart_click_to_edit($link) {
  */
 function theme_uc_node_cart_teaser($node) {
   $output = '<div class="uc-node-cart-teaser" id="uc-node-cart-teaser-'
-          . $node->nid .'">'. check_plain($node->title) .'</div>';
+          . $node->nid . '">' . check_plain($node->title) . '</div>';
 
   return $output;
 }
@@ -1265,8 +1279,8 @@ function theme_uc_node_checkout_node_attributes($product) {
     $option_rows[] = t('@attribute: @option', array('@attribute' => $attribute, '@option' => $option));
   }
 
-  $output = '<div class="ucnc-attributes"><div class="ucnc-attributes-label">'. t('Original product attributes:')
-           .'</div>'. theme('item_list', $option_rows) .'</div>';
+  $output = '<div class="ucnc-attributes"><div class="ucnc-attributes-label">' . t('Original product attributes:')
+           . '</div>' . theme('item_list', $option_rows) . '</div>';
 
   return $output;
 }
@@ -1278,67 +1292,4 @@ function theme_uc_node_checkout_node_attributes($product) {
  */
 function theme_uc_node_checkout_restrict_cart_qty_field($element) {
   return check_plain($element['#value']);
-}
-
-
-/**
- * Implements hook_token_list().
- */
-function uc_node_checkout_token_list($type = 'all') {
-  if ($type == 'node' || $type == 'product' || $type == 'ubercart' || $type == 'all') {
-    $tokens = array();
-    $tokens['referenced_product']['referenced-title'] = t("The title of the referenced product.");
-    $tokens['referenced_product']['model'] = t("The referenced product's model number.");
-    $tokens['referenced_product']['list_price'] = t("The referenced product's list price.");
-    $tokens['referenced_product']['cost'] = t("The referenced product's cost.");
-    $tokens['referenced_product']['sell_price'] = t("The referenced product's sell price.");
-    $tokens['referenced_product']['weight_units'] = t("The unit of measurement for the referenced product's weight.");
-    $tokens['referenced_product']['weight-raw'] = t("The numerical value of the referenced product's weight.");
-    $tokens['referenced_product']['weight'] = t("The referenced product's formatted weight.");
-    $tokens['referenced_product']['length_units'] = t("The unit of measurement for the referenced product's length, width, and height.");
-    $tokens['referenced_product']['length-raw'] = t("The numerical value of the referenced product's length.");
-    $tokens['referenced_product']['length'] = t("The referenced product's formatted length.");
-    $tokens['referenced_product']['width-raw'] = t("The numerical value of the referenced product's width.");
-    $tokens['referenced_product']['width'] = t("The referenced product's formatted width.");
-    $tokens['referenced_product']['height-raw'] = t("The numerical value of the referenced product's height.");
-    $tokens['referenced_product']['height'] = t("The referenced product's formatted height.");
-    return $tokens;
-  }
-
-}
-
-
-/**
- * Implements hook_token_values().
- */
-function uc_node_checkout_token_values($type, $object = NULL, $options = array()) {
-  if (uc_node_checkout_node_associated($object)) {
-    // Load up the corresponding product so we can use the default add to
-    // cart quantity.
-    if (!empty($object->ucnc_product_nid)) {
-      $product = node_load($object->ucnc_product_nid);
-    }
-    else {
-      $order_product_id = db_result(db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $object->nid));
-      $nid = db_result(db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $order_product_id));
-      $product = node_load($nid);
-    }
-    $tokens = array();
-    $tokens['referenced-title'] = $product->title;
-    $tokens['model'] = $product->model;
-    $tokens['list_price'] = $product->list_price;
-    $tokens['cost'] = $product->cost;
-    $tokens['sell_price'] = $product->sell_price;
-    $tokens['weight_units'] = $product->weight_units;
-    $tokens['weight-raw'] = $product->weight;
-    $tokens['weight'] = uc_weight_format($product->weight, $product->weight_units);
-    $tokens['length_units'] = $product->length_units;
-    $tokens['length-raw'] = $product->length;
-    $tokens['length'] = uc_length_format($product->length, $product->length_units);
-    $tokens['width-raw'] = $product->width;
-    $tokens['width'] = uc_length_format($product->width, $product->length_units);
-    $tokens['height-raw'] = $product->height;
-    $tokens['height'] = uc_length_format($product->height, $product->length_units);
-    return $tokens;
-  }
 }
