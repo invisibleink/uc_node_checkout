@@ -330,20 +330,24 @@ function uc_node_checkout_settings_form() {
   $form['display_order']['uc_node_order_product_option'] = array(
     '#type' => 'textfield',
     '#title' => t('Order product option'),
-    '#description' => t('Specify a pattern for the option string; uses node tokens like [nid] and [title].'),
-    '#default_value' => variable_get('uc_node_order_product_option', '[nid] - [title]'),
+    '#description' => t('Specify a pattern for the option string; uses product tokens like [product:nid] and [product:title].'),
+    '#default_value' => variable_get('uc_node_order_product_option', '[product:nid] - [product:title]'),
   );
-  $form['display_order']['tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Node tokens'),
-    '#description' => t('Use these tokens in the attribute and option fields above.  They will be replaced with values from the node checkout nodes on the order pages. Do not use tokens ending in -raw for these settings!'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['display_order']['tokens']['data'] = array(
-    '#type' => 'markup',
-    '#markup' => '<div>' . theme('token_help', 'node') . '</div>',
-  );
+
+  // Display token help, if token module is installed
+  if (module_exists('token')) {
+    $form['display_order']['tokens'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Node tokens'),
+      '#description' => t('Use these tokens in the attribute and option fields above.  They will be replaced with values from the node checkout nodes on the order pages. Do not use tokens ending in -raw for these settings!'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );
+    $form['display_order']['tokens']['data'] = array(
+      '#type' => 'markup',
+      '#markup' => '<div>' . theme('token_tree', array('token_types' => array('product'))) . '</div>',
+    );
+  }
 
   return system_settings_form($form);
 }
