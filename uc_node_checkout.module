@@ -342,134 +342,136 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
   }
 
   // Alter the node forms for UC Node Checkout governed node types.
-  foreach (uc_node_checkout_product_map() as $type => $value) {
-    if ($form_id == $type . '_node_form') {
-      // Determine the product nid that will be added to the cart when this
-      // node is created.  First look for a single product node association.
-      if ($value['nid'] && !$value['view']) {
-        $product_nid = $value['nid'];
-      }
-      elseif (!empty($_GET['product_nid'])) {
-        // Otherwise look in the $_GET array.
-        $product_nid = $_GET['product_nid'];
-      }
-      elseif (!empty($_POST['ucnc_product_nid'])) {
-        // Try the $_POST array (for rebuilding a node via AHAH)
-        $product_nid = $_POST['ucnc_product_nid'];
-      }
-      elseif (empty($form['nid']['#value']) && !$form['#programmed']) {
-        // If none was found, we must ask the user to specify one.
-        drupal_goto('ucnc-select/' . $type);
-      }
+  if (strpos($form_id, '_node_form') > 0) {
+    foreach (uc_node_checkout_product_map() as $type => $value) {
+      if ($form_id == $type . '_node_form') {
+        // Determine the product nid that will be added to the cart when this
+        // node is created.  First look for a single product node association.
+        if ($value['nid'] && !$value['view']) {
+          $product_nid = $value['nid'];
+        }
+        elseif (!empty($_GET['product_nid'])) {
+          // Otherwise look in the $_GET array.
+          $product_nid = $_GET['product_nid'];
+        }
+        elseif (!empty($_POST['ucnc_product_nid'])) {
+          // Try the $_POST array (for rebuilding a node via AHAH)
+          $product_nid = $_POST['ucnc_product_nid'];
+        }
+        elseif (empty($form['nid']['#value']) && !$form['#programmed']) {
+          // If none was found, we must ask the user to specify one.
+          drupal_goto('ucnc-select/' . $type);
+        }
 
-      // If specified, put the default qty. in a hidden field.
-      if (!empty($_GET['qty']) && intval($_GET['qty']) > 0) {
-        $form['default_qty'] = array(
-          '#type' => 'hidden',
-          '#value' => intval($_GET['qty']),
-        );
-      }
-
-      // If enabled, add attributes form to the top of the node form if the node
-      // has not already been checked out.
-      if (module_exists('uc_attribute') && empty($form['#node']->uc_order_product_id)) {
-        // Load up any attribute elements for this node's form.
-        $attributes = _uc_attribute_alter_form(node_load($product_nid));
-
-        // If we got a result...
-        if (!empty($attributes)) {
-          // Put them in a tidy fieldset.
-          $form['attributes'] = array(
-            '#type' => 'fieldset',
-            '#title' => t('Product specifications'),
-            '#description' => t('Please specify your preferences from these options. Some may affect the final price of your purchase.'),
-            '#weight' => -10,
-            '#tree' => TRUE,
+        // If specified, put the default qty. in a hidden field.
+        if (!empty($_GET['qty']) && intval($_GET['qty']) > 0) {
+          $form['default_qty'] = array(
+            '#type' => 'hidden',
+            '#value' => intval($_GET['qty']),
           );
-          $form['attributes'] += $attributes;
+        }
 
-          // Set defaults based on a GET variable.
-          if (!empty($_GET['attr'])) {
-            foreach (explode('_', $_GET['attr']) as $attr) {
-              list($aid, $oid) = explode('-', $attr);
-              if ($form['attributes'][$aid]['#type'] == 'checkboxes') {
-                $oid = explode('|', $oid);
+        // If enabled, add attributes form to the top of the node form if the
+        // node has not already been checked out.
+        if (module_exists('uc_attribute') && empty($form['#node']->uc_order_product_id)) {
+          // Load up any attribute elements for this node's form.
+          $attributes = _uc_attribute_alter_form(node_load($product_nid));
+
+          // If we got a result...
+          if (!empty($attributes)) {
+            // Put them in a tidy fieldset.
+            $form['attributes'] = array(
+              '#type' => 'fieldset',
+              '#title' => t('Product specifications'),
+              '#description' => t('Please specify your preferences from these options. Some may affect the final price of your purchase.'),
+              '#weight' => -10,
+              '#tree' => TRUE,
+            );
+            $form['attributes'] += $attributes;
+
+            // Set defaults based on a GET variable.
+            if (!empty($_GET['attr'])) {
+              foreach (explode('_', $_GET['attr']) as $attr) {
+                list($aid, $oid) = explode('-', $attr);
+                if ($form['attributes'][$aid]['#type'] == 'checkboxes') {
+                  $oid = explode('|', $oid);
+                }
+                $form['attributes'][$aid]['#default_value'] = $oid;
               }
-              $form['attributes'][$aid]['#default_value'] = $oid;
             }
-          }
 
-          // Override with any defaults found in the cart products table.
-          if ($item = uc_node_checkout_load_cart_item($form['nid']['#value'])) {
-            // Set the attribute options to those in the database.
-            foreach ($item->data['attributes'] as $aid => $oid) {
-              $form['attributes'][$aid]['#default_value'] = $oid;
-            }
-          }
-        }
-      }
-
-      // For node add forms...
-      if (empty($form['nid']['#value'])) {
-        $form['ucnc_product_nid'] = array(
-          '#type' => 'hidden',
-          '#value' => $product_nid,
-        );
-
-        // If specified, redirect anonymous customers to login.
-        if (variable_get('uc_node_checkout_node_access', TRUE) && !$user->uid) {
-          drupal_set_message(t('You must login or create a user account to continue.'));
-          $_SESSION['node_checkout_redirect'] = array('node/add/' . str_replace('_', '-', $type), 'product_nid='.$product_nid);
-          drupal_goto('user');
-        }
-        else {
-          unset($_SESSION['node_checkout_redirect']);
-        }
-
-        // If stock control is turned on, prevent adding an out of stock node.
-        if (module_exists('uc_stock')) {
-          $node = node_load($value['nid']);
-          $stock = uc_stock_level($node->model);
-
-          if ($stock !== FALSE && $stock <= 0) {
-            if (variable_get('uc_node_stock_prevent_add', FALSE)) {
-              drupal_set_message(t('Due to stock levels, this product is currently not available.'));
-              drupal_goto(variable_get('uc_node_stock_prevent_add_redirect', 'cart'));
-            }
-            elseif (variable_get('uc_node_stock_prevent_checkout', TRUE) && empty($form['#post'])) {
-              drupal_set_message(t('Due to stock levels, you will not be able to complete the purchase of this product. You may still create it and add it to your shopping cart until stock is available. Please contact us for more information.'));
+            // Override with any defaults found in the cart products table.
+            if ($item = uc_node_checkout_load_cart_item($form['nid']['#value'])) {
+              // Set the attribute options to those in the database.
+              foreach ($item->data['attributes'] as $aid => $oid) {
+                $form['attributes'][$aid]['#default_value'] = $oid;
+              }
             }
           }
         }
 
-        // If enabled, alter the submit button to say "Add to cart".
-        if (variable_get('uc_node_checkout_alter_node_submit_button', TRUE)) {
-          $form['buttons']['submit']['#value'] = variable_get('uc_product_add_to_cart_text', t('Add to cart'));
-        }
-      }
+        // For node add forms...
+        if (empty($form['nid']['#value'])) {
+          $form['ucnc_product_nid'] = array(
+            '#type' => 'hidden',
+            '#value' => $product_nid,
+          );
 
-      // Remove restricted fields for users without access.
-      $fields = variable_get('uc_node_checkout_' . $type . '_restrictions', array());
-
-      if (!empty($fields) && !user_access('edit any ' . $type . ' content')) {
-        foreach ($fields as $field) {
-          if ($field == 'preview') {
-            $form['buttons']['preview']['#access'] = FALSE;
+          // If specified, redirect anonymous customers to login.
+          if (variable_get('uc_node_checkout_node_access', TRUE) && !$user->uid) {
+            drupal_set_message(t('You must login or create a user account to continue.'));
+            $_SESSION['node_checkout_redirect'] = array('node/add/' . str_replace('_', '-', $type), 'product_nid='.$product_nid);
+            drupal_goto('user');
           }
           else {
-            $form[$field]['#access'] = FALSE;
+            unset($_SESSION['node_checkout_redirect']);
+          }
+
+          // If stock control is turned on, prevent adding an out of stock node.
+          if (module_exists('uc_stock')) {
+            $node = node_load($value['nid']);
+            $stock = uc_stock_level($node->model);
+
+            if ($stock !== FALSE && $stock <= 0) {
+              if (variable_get('uc_node_stock_prevent_add', FALSE)) {
+                drupal_set_message(t('Due to stock levels, this product is currently not available.'));
+                drupal_goto(variable_get('uc_node_stock_prevent_add_redirect', 'cart'));
+              }
+              elseif (variable_get('uc_node_stock_prevent_checkout', TRUE) && empty($form['#post'])) {
+                drupal_set_message(t('Due to stock levels, you will not be able to complete the purchase of this product. You may still create it and add it to your shopping cart until stock is available. Please contact us for more information.'));
+              }
+            }
+          }
+
+          // If enabled, alter the submit button to say "Add to cart".
+          if (variable_get('uc_node_checkout_alter_node_submit_button', TRUE)) {
+            $form['buttons']['submit']['#value'] = variable_get('uc_product_add_to_cart_text', t('Add to cart'));
           }
         }
-      }
 
-      // Redirect non-administrators to the shopping cart after edits.
-      if (variable_get('uc_node_checkout_submit_redirect', TRUE) &&
-          !user_access('edit any ' . $type . ' content')) {
-        $form['#redirect'] = variable_get('uc_add_item_redirect', 'cart');
-        // If redirect is <none>, we need to come back to the current
-        // page after submit.
-        if ($form['#redirect'] === '<none>') {
-          $form['#redirect'] = request_uri();
+        // Remove restricted fields for users without access.
+        $fields = variable_get('uc_node_checkout_' . $type . '_restrictions', array());
+
+        if (!empty($fields) && !user_access('edit any ' . $type . ' content')) {
+          foreach ($fields as $field) {
+            if ($field == 'preview') {
+              $form['buttons']['preview']['#access'] = FALSE;
+            }
+            else {
+              $form[$field]['#access'] = FALSE;
+            }
+          }
+        }
+
+        // Redirect non-administrators to the shopping cart after edits.
+        if (variable_get('uc_node_checkout_submit_redirect', TRUE) &&
+            !user_access('edit any ' . $type . ' content')) {
+          $form['#redirect'] = variable_get('uc_add_item_redirect', 'cart');
+          // If redirect is <none>, we need to come back to the current
+          // page after submit.
+          if ($form['#redirect'] === '<none>') {
+            $form['#redirect'] = request_uri();
+          }
         }
       }
     }
@@ -999,7 +1001,7 @@ function uc_node_checkout_product_map($type = '') {
  */
 function uc_node_checkout_node_associated($node) {
   // Return TRUE if a product node has been associated to this node type.
-  if (isset($node->type) && 
+  if (isset($node->type) &&
       $nc_map = uc_node_checkout_product_map($node->type)) {
     if ($nc_map['nid'] || $nc_map['view']) {
       return TRUE;
