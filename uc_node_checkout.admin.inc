@@ -65,7 +65,7 @@ function uc_node_checkout_type_form(&$form_state, $type) {
     '#type' => 'textfield',
     '#title' => t('Product NID'),
     '#description' => t("When a %type node is created, one of the chosen product is added to the user's cart.<br />Start typing a SKU or title in this field to view autocomplete options.<br />Empty this field to disable node checkout for this node type.", array('%type' => $type->name)),
-    '#default_value' => $nc_map[$type->type]['nid'],
+    '#default_value' => isset($nc_map[$type->type]) ? $nc_map[$type->type]['nid'] : '',
     '#autocomplete_path' => 'uc_node_checkout/autocomplete',
   );
 
@@ -94,7 +94,7 @@ function uc_node_checkout_type_form(&$form_state, $type) {
       '#title' => t('View'),
       '#description' => t('Optional. When a user creates a %type node, allow them to choose the associated product from this View.<br />If a View is specified, the Product NID setting will be ignored.', array('%type' => $type->name)),
       '#options' => array_merge(array('' => ' '), $views),
-      '#default_value' => $nc_map[$type->type]['view'],
+      '#default_value' => isset($nc_map[$type->type]) ? $nc_map[$type->type]['view'] : '',
     );
   }
 
