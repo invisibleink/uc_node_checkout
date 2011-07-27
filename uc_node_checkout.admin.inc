@@ -52,7 +52,7 @@ function uc_node_checkout_type_form($form, &$form_state, $type) {
   $options = array(0 => t('<None>'));
 
   $result = db_query('SELECT n.nid, p.model, n.title FROM {uc_products} AS p INNER JOIN {node} AS n ON p.vid = n.vid ORDER BY p.model');
-  while ($product = $result->fetchObject()) {
+  foreach ($result as $product) {
     $options[$product->nid] = '(' . $product->model . ') ' . $product->title;
   }
 
@@ -168,9 +168,22 @@ function uc_node_checkout_type_form($form, &$form_state, $type) {
 function uc_node_checkout_type_form_submit($form, &$form_state) {
   // Save the product node ID.
   if ($form_state['values']['product_nid'] || $form_state['values']['view']) {
-    db_query("UPDATE {uc_node_checkout_types} SET product_nid = %d, node_view = '%s' WHERE node_type = '%s'", $form_state['values']['product_nid'], $form_state['values']['view'], $form_state['values']['type']);
-    if (!db_affected_rows()) {
-      db_query("INSERT INTO {uc_node_checkout_types} (node_type, product_nid, node_view) VALUES ('%s', %d, '%s')", $form_state['values']['type'], $form_state['values']['product_nid'], $form_state['values']['view']);
+    if (
+      !db_update('uc_node_checkout_types')
+        ->fields(array(
+          'product_nid' => $form_state['values']['product_nid'],
+          'node_view'   => $form_state['values']['view'],
+        ))
+        ->condition('node_type', $form_state['values']['type'])
+        ->execute()
+    ) {
+      db_insert('uc_node_checkout_types')
+        ->fields(array(
+          'node_type'   => $form_state['values']['type'],
+          'product_nid' => $form_state['values']['product_nid'],
+          'node_view'   => $form_state['values']['view'],
+        ))
+        ->execute();
     }
   }
   else {
@@ -368,7 +381,7 @@ function uc_node_checkout_autocomplete($string = '') {
       ->fields('n', array('nid', 'title'))
       ->fields('p', array('model', 'unique_hash'))
       ->where("p.unique_hash <> ''")
-      ->where("LOWER(n.title) LIKE :title OR LOWER(p.model) LIKE :title", array(':title' => '%' . db_like(strtolower($string)) . '%'))
+      ->where('LOWER(n.title) LIKE :title OR LOWER(p.model) LIKE :title', array(':title' => '%' . db_like(strtolower($string)) . '%'))
       ->range(0, 10);
     $result = $query->execute();
     
