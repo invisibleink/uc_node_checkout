@@ -108,18 +108,30 @@ function uc_node_checkout_admin_settings_title($type) {
 
 
 /**
- * Implements hook_perm().
+ * Implements hook_permission().
  */
-function uc_node_checkout_perm() {
-  return array('administer node checkout', 'create node associations');
+function uc_node_checkout_permission() {
+  return array(
+    'administer node checkout' => array(
+      'title'       => t('Administer node checkout'),
+      'description' => t('Configure settins for Ubercart Node Checkout.'),
+    ),
+    'create node associations' => array(
+      'title'       => t('Create node associations'),
+      'description' => t('Associate content types with Ubercart products and allow these types to be purchased.'),
+    ),
+  );
 }
 
 
 /**
  * Implements hook_help().
  */
-function uc_node_checkout_help($path, $arg) {
+function uc_node_checkout_help($path = 'admin/help#uc_node_checkout', $arg = NULL) {
   switch ($path) {
+    case 'admin/help#uc_node_checkout':
+      return t("<p>This module allows you to bind a node type to an Ubercart product, as typically required in event registration sites and alike.</p><p>Binding a node type to a product has two effects:<ul><li>When a user creates a node of that type, the specified product is added to the shopping cart with a node reference to the newly created node.</li><li>When a user buys a product with a bound node, an extra step is inserted into the checkout process requiring creation of a node of the bound type.</li></ul></p><p>Options in the module allow you to turn links in the shopping cart into edit links for the node, display a summary of the node details in the shopping cart and on the order screens, and hide CCK fields on the node type from users who don't have the 'edit content' permission. This makes the module an ideal candidate for registration site and customizable product sites that contain additional fields only administrators should have access to when processing the orders.</p>");
+
     case 'admin/store/settings/node-checkout':
       return t('The table represents products associated with node types on your site. If you want a node type to be governed by UC Node Checkout, simply click its edit link and specify which product node on your site should be added to the cart when a node of that type gets created.  Use the settings tab to adjust some extra behaviors and display settings of the module.');
   }
@@ -580,7 +592,7 @@ function uc_node_checkout_product_select_form($form_state, $type) {
   }
 
   // Loop through the query results and add options for the select list.
-  while ($node = $result->fetchObject()) {
+  foreach ($result as $node) {
     // If the view includes the product's price,
     // display that in the list of options.
     if (isset($node->uc_products_sell_price)) {
@@ -718,7 +730,7 @@ function uc_node_checkout_nodeapi(&$node, $op, $arg3 = NULL, $arg4 = NULL) {
     case 'update':
       // Only save attributes if this node has not been checked out.
       if (empty($node->uc_order_product_id) && isset($node->attributes)) {
-        $data = db_query("SELECT data FROM {uc_cart_products} WHERE data LIKE :nid", array(':nid' => '%\"node_checkout_nid\";i:' . $node->nid . ';%'))->fetchField();
+        $data = db_query('SELECT data FROM {uc_cart_products} WHERE data LIKE :nid', array(':nid' => '%\"node_checkout_nid\";i:' . $node->nid . ';%'))->fetchField();
         $node->uc_order_product_id = db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $node->nid)->fetchField();
         $node->ucnc_product_nid = db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $node->uc_order_product_id)->fetchField();
         $data = unserialize($data);
@@ -1056,7 +1068,7 @@ function uc_node_checkout_node_type_association($product_nid) {
 
         // Loop through the query results and return the current node type if
         // we find an nid match.
-        while ($node = $result->fetchObject()) {
+        foreach ($result as $node) {
           if ($node->nid == $product_nid) {
             return $type;
           }
