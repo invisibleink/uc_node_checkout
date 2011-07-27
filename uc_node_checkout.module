@@ -144,16 +144,16 @@ function uc_node_checkout_help($path = 'admin/help#uc_node_checkout', $arg = NUL
 function uc_node_checkout_theme() {
   return array(
     'uc_cart_click_to_edit' => array(
-      'variables' => array($link = ''),
+      'variables' => array('link' => ''),
     ),
     'uc_node_cart_teaser' => array(
       'variables' => array('node' => NULL),
     ),
     'uc_node_checkout_node_attributes' => array(
-      'variables' => array(),
+      'variables' => array('product' => NULL),
     ),
     'uc_node_checkout_restrict_cart_qty_field' => array(
-      'variables' => array('form' => NULL),
+      'render element' => 'element',
     ),
   );
 }
@@ -251,7 +251,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
       );
 
       // Change the submit handler to use the add to cart redirect handler.
-      $form['submit']['#submit'][] = 'uc_node_checkout_add_to_cart_submit';
+      $form['actions']['submit']['#submit'] = array('uc_node_checkout_add_to_cart_submit');
     }
   }
 
@@ -301,7 +301,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             $title = check_plain($item->title);
           }
 
-          $form['items'][$i]['title']['#value'] = $title;
+          $form['items'][$i]['title']['#markup'] = $title;
         }
 
         // Add the node cart teaser beneath the title if necessary.
@@ -309,7 +309,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
           if (variable_get('uc_node_order_product_teaser_override', FALSE)) {
             $list = array(
               token_replace(variable_get('uc_node_order_product_attribute', 'ID'), 'node', $node) . ': '
-              . token_replace(variable_get('uc_node_order_product_option', '[nid] - [title]'), 'node', $node),
+              . token_replace(variable_get('uc_node_order_product_option', '[product:nid] - [product:title]'), 'node', $node),
             );
             $teaser = theme('item_list', $list, NULL, 'ul', array('class' => 'uc-node-cart-teaser'));
           }
@@ -317,11 +317,11 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             $teaser = theme('uc_node_cart_teaser', $node);
           }
 
-          $form['items'][$i]['description']['#value'] .= $teaser;
+          $form['items'][$i]['description']['#markup'] .= $teaser;
         }
 
         // Rebuild the description from the title and options.
-        $form['items'][$i]['desc']['#value'] = $form['items'][$i]['title']['#value'] . $form['items'][$i]['description']['#value'];
+        $form['items'][$i]['desc']['#markup'] = $form['items'][$i]['title']['#markup'] . $form['items'][$i]['description']['#markup'];
 
         // Seeing as the quantity is passsed in and should not be changed at this stage, disable.
         $form['items'][$i]['qty']['#value'] = $form['items'][$i]['qty']['#default_value'];
