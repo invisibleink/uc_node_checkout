@@ -509,12 +509,12 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
     drupal_set_message(check_plain($msg));
   }
 
-  $get = array('product_nid=' . $form_state['values']['nid']);
+  $get = array('product_nid' => $form_state['values']['nid']);
 
   // Pass the qty. if specified.
   if (!empty($form_state['values']['qty']) &&
       intval($form_state['values']['qty']) > 0) {
-    $get[] = 'qty=' . intval($form_state['values']['qty']);
+    $get['qty'] = intval($form_state['values']['qty']);
   }
 
   // If uc_varprice module is used, pass the user-entered price via session variable
@@ -545,11 +545,11 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   }
 
   if (!empty($attr)) {
-    $get[] = 'attr=' . implode('_', $attr);
+    $get['attr'] = implode('_', $attr);
   }
 
   // Redirect to the node add form.
-  $form['#redirect'] = array('node/add/' . str_replace('_', '-', $form_state['values']['node_type']), implode('&', $get));
+  $form_state['redirect'] = array('node/add/' . str_replace('_', '-', $form_state['values']['node_type']), array('query' => $get));
 }
 
 
