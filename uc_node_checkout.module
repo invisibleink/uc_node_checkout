@@ -845,9 +845,9 @@ function uc_node_checkout_node_view($node, $view_mode, $langcode) {
 }
 
 /**
- * Implements Ubercart hook_cart_item().
+ * Implements hook_uc_cart_item().
  */
-function uc_node_checkout_cart_item($op, &$item) {
+function uc_node_checkout_uc_cart_item($op, &$item) {
   switch ($op) {
     case 'load':
       // Load the entire related node into the item array for use in display.
@@ -948,9 +948,9 @@ function uc_node_checkout_update_content_fields($product, $node, $order = NULL) 
 
 
 /**
- * Implements Ubercart hook_order().
+ * Implements hook_uc_order().
  */
-function uc_node_checkout_order($op, &$arg1, $arg2) {
+function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
   switch ($op) {
     // Save node to order product associations upon order submission.
     case 'submit':
@@ -1190,9 +1190,9 @@ function uc_node_checkout_load_order_product($order_product_id) {
 
 
 /**
- * Implements hook_order_pane()
+ * Implements hook_uc_order_pane()
  */
-function uc_node_checkout_order_pane() {
+function uc_node_checkout_uc_order_pane() {
   $panes[] = array(
     'id' => 'uc_node_checkout',
     'callback' => 'uc_node_checkout_order_pane_nodes',
