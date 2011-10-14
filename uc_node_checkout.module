@@ -457,7 +457,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
           // If enabled, alter the submit button to say "Add to cart".
           if (variable_get('uc_node_checkout_alter_node_submit_button', TRUE)) {
-            $form['buttons']['submit']['#value'] = variable_get('uc_product_add_to_cart_text', t('Add to cart'));
+            $form['actions']['submit']['#value'] = variable_get('uc_product_add_to_cart_text', t('Add to cart'));
           }
         }
 
@@ -467,7 +467,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         if (!empty($fields) && !user_access('edit any ' . $type . ' content')) {
           foreach ($fields as $field) {
             if ($field == 'preview') {
-              $form['buttons']['preview']['#access'] = FALSE;
+              $form['actions']['preview']['#access'] = FALSE;
             }
             else {
               $form[$field]['#access'] = FALSE;
