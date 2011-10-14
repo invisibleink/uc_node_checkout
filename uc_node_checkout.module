@@ -284,17 +284,17 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             variable_get('uc_node_checkout_click_to_edit', TRUE)) {
           if (!in_array($i, $deleted_items) && node_access('update', $node)) {
             if (variable_get('uc_node_checkout_cart_titles', TRUE)) {
-              $title = l($item->title, 'node/' . $node->nid . '/edit', array('query' => 'destination=cart'));
+              $title = l($item->title, 'node/' . $node->nid . '/edit', array('query' => array('destination' => 'cart')));
               $click = t('(click to edit)');
             }
             else {
-              $title = $form['items'][$i]['title']['#value'];
-              $click = ' - ' . l(t('edit'), 'node/' . $node->nid . '/edit', array('query' => 'destination=cart'));
+              $title = $form['items'][$i]['title']['#markup'];
+              $click = ' - ' . l(t('edit'), 'node/' . $node->nid . '/edit', array('query' => array('destination' => 'cart')));
             }
 
             // Add the click to edit link to the title if necessary.
             if (variable_get('uc_node_checkout_click_to_edit', TRUE)) {
-              $title .= ' ' . theme('uc_cart_click_to_edit', $click);
+              $title .= ' ' . theme('uc_cart_click_to_edit', array('link' => $click));
             }
           }
           else {
@@ -1284,8 +1284,8 @@ function uc_node_checkout_node_type($op, $info) {
 /**
  * Themes a click to edit link by node checkout products in a customer's cart.
  */
-function theme_uc_cart_click_to_edit($link) {
-  return '<span class="node-checkout-edit">' . $link . '</span>';
+function theme_uc_cart_click_to_edit($variables) {
+  return '<span class="node-checkout-edit">' . $variables['link'] . '</span>';
 }
 
 
