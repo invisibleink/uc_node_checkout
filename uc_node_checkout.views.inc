@@ -29,14 +29,14 @@ function uc_node_checkout_views_data() {
   );
 
   $data['uc_node_checkout_order_products']['order_product_id'] = array(
-    'title' => t('UC Node Checkout order product'),
+    'title' => t('Ordered product'),
     'help' => t('Relate a purchased node to its UC Node Checkout order product.'),
     'relationship' => array(
       'handler' => 'views_handler_relationship',
       'base' => 'uc_order_products',
       'base field' => 'order_product_id',
       'field' => 'order_product_id',
-      'label' => t('UC Node Checkout order product'),
+      'label' => t('ordered product'),
     ),
   );
 
