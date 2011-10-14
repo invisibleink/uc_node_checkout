@@ -1194,10 +1194,10 @@ function uc_node_checkout_load_order_product($order_product_id) {
  * Implements hook_uc_order_pane()
  */
 function uc_node_checkout_uc_order_pane() {
-  $panes[] = array(
-    'id' => 'uc_node_checkout',
+  $panes['uc_node_checkout'] = array(
     'callback' => 'uc_node_checkout_order_pane_nodes',
     'title' => t('Custom Products'),
+    'desc' => t('View purchased nodes associated with the order.'),
     'class' => 'pos-left abs-left',
     'weight' => 7,
     'show' => array('view', 'customer'),
