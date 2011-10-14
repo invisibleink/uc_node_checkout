@@ -1315,8 +1315,8 @@ function theme_uc_node_cart_teaser($variables) {
  *   An HTML string representing the attribute selections from the purchase of
  *   the node.
  */
-function theme_uc_node_checkout_node_attributes($product) {
-  foreach ($product->data['attributes'] as $attribute => $option) {
+function theme_uc_node_checkout_node_attributes($variables) {
+  foreach ($variables['product']->data['attributes'] as $attribute => $option) {
     if (is_array($option)) {
       $option = implode(', ', $option);
     }
@@ -1324,7 +1324,7 @@ function theme_uc_node_checkout_node_attributes($product) {
   }
 
   $output = '<div class="ucnc-attributes"><div class="ucnc-attributes-label">' . t('Original product attributes:')
-           . '</div>' . theme('item_list', $option_rows) . '</div>';
+           .'</div>'. theme('item_list', array('items' => $option_rows)) .'</div>';
 
   return $output;
 }
