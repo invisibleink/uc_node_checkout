@@ -1333,6 +1333,6 @@ function theme_uc_node_checkout_node_attributes($product) {
  * Themes cart quantity boxes, otherwise they won't display due to
  * being #type = value.
  */
-function theme_uc_node_checkout_restrict_cart_qty_field($element) {
-  return check_plain($element['#value']);
+function theme_uc_node_checkout_restrict_cart_qty_field($variables) {
+  return check_plain($variables['element']['#value']);
 }
