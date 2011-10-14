@@ -314,7 +314,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             $teaser = theme('item_list', $list, NULL, 'ul', array('class' => 'uc-node-cart-teaser'));
           }
           else {
-            $teaser = theme('uc_node_cart_teaser', $node);
+            $teaser = theme('uc_node_cart_teaser', array('node' => $node));
           }
 
           $form['items'][$i]['description']['#markup'] .= $teaser;
@@ -1293,7 +1293,9 @@ function theme_uc_cart_click_to_edit($link) {
 /**
  * Themes a cart teaser for a node checkout product in the shopping cart.
  */
-function theme_uc_node_cart_teaser($node) {
+function theme_uc_node_cart_teaser($variables) {
+  $node = &$variables['node'];
+
   $output = '<div class="uc-node-cart-teaser" id="uc-node-cart-teaser-'
           . $node->nid . '">' . check_plain($node->title) . '</div>';
 
