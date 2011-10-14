@@ -535,11 +535,13 @@ function uc_node_checkout_add_to_cart_submit(&$form, &$form_state) {
   // Pass the attributes selections in the URL.
   $attr = array();
 
-  foreach ((array) $form_state['values']['attributes'] as $aid => $oid) {
-    if ($form['attributes'][$aid]['#type'] == 'checkboxes') {
-      $oid = implode('|', $oid);
+  if (isset($form_state['values']['attributes'])) {
+    foreach ($form_state['values']['attributes'] as $aid => $oid) {
+      if ($form['attributes'][$aid]['#type'] == 'checkboxes') {
+        $oid = implode('|', $oid);
+      }
+      $attr[] = $aid . '-' . $oid;
     }
-    $attr[] = $aid . '-' . $oid;
   }
 
   if (!empty($attr)) {
