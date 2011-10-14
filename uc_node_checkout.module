@@ -1109,14 +1109,16 @@ function uc_node_checkout_node_type_association($product_nid) {
  * purchased.
  */
 function uc_node_checkout_save_product_association($order_product_id, $nid) {
-  // First attempt to update any existing associations.
-  db_query("UPDATE {uc_node_checkout_order_products} SET order_product_id = %d WHERE nid = %d", $order_product_id, $nid);
-
-  // If none were found...
-  if (!db_affected_rows()) {
-    // Insert a new association.
-    db_query("INSERT INTO {uc_node_checkout_order_products} (nid, order_product_id) VALUES (%d, %d)", $nid, $order_product_id);
-  }
+  db_merge('uc_node_checkout_order_products')
+    ->key(array('nid' => $nid))
+    ->insertFields(array(
+      'nid' => $nid,
+      'order_product_id' => $order_product_id,
+    ))
+    ->updateFields(array(
+      'order_product_id' => $order_product_id,
+    ))
+    ->execute();
 }
 
 
