@@ -478,12 +478,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         // Redirect non-administrators to the shopping cart after edits.
         if (variable_get('uc_node_checkout_submit_redirect', TRUE) &&
             !user_access('edit any ' . $type . ' content')) {
-          $form['#redirect'] = variable_get('uc_add_item_redirect', 'cart');
-          // If redirect is <none>, we need to come back to the current
-          // page after submit.
-          if ($form['#redirect'] === '<none>') {
-            $form['#redirect'] = request_uri();
-          }
+          $form['actions']['submit']['#submit'][] = 'uc_node_checkout_node_form_submit';
         }
       }
     }
@@ -498,6 +493,17 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
+/**
+ * Submit handler for node checkout associated content types.
+ */
+function uc_node_checkout_node_form_submit(&$form, &$form_state) {
+  $form_state['redirect'] = variable_get('uc_add_item_redirect', 'cart');
+  // If redirect is <none>, we need to come back to the current
+  // page after submit.
+  if ($form_state['redirect'] === '<none>') {
+    $form_state['redirect'] = request_uri();
+  }
+}
 
 /**
  * Submit handler for add to cart buttons on node checkout associated products.
