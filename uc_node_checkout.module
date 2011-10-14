@@ -823,7 +823,7 @@ function uc_node_checkout_node_view($node, $view_mode, $langcode) {
     $product = uc_node_checkout_load_order_product($node->uc_order_product_id);
 
     // If it has attributes on it, set them to display.
-    if (is_array($product->data['attributes']) && count($product->data['attributes']) > 0) {
+    if (!empty($product->data['attributes'])) {
       $node->content['uc_attribute_text'] = array(
         '#data' => $product->data['attributes'],
         '#value' => theme('uc_node_checkout_node_attributes', $product),
@@ -835,9 +835,9 @@ function uc_node_checkout_node_view($node, $view_mode, $langcode) {
   // Link node to the corresponding order
   global $user;
   if (isset($node->uc_order_product_id) && $node->uc_order_product_id && (user_access('view all orders') || (user_access('view own orders') && $node->uid == $user->uid))) {
-    $result = db_query('SELECT {uc_order_products}.order_id, {uc_orders}.uid FROM {uc_order_products},{uc_orders} WHERE order_product_id = %d AND {uc_orders}.order_id = {uc_order_products}.order_id', $node->uc_order_product_id)->fetchAssoc();
+    $result = db_query("SELECT op.order_id, o.uid FROM {uc_order_products} op, {uc_orders} o WHERE op.order_product_id = :product_id AND o.order_id = op.order_id", array(':product_id' => $node->uc_order_product_id))->fetchAssoc();
     $node->content['uc_node_checkout_order'] = array(
-      '#value' => '<span class="uc-node-checkout-order-link">' . l(t('Order @order_id', array('@order_id' => $result['order_id'])), 'user/' . $result['uid'] . '/order/' . $result['order_id']) . '</span>',
+      '#markup' => '<span class="uc-node-checkout-order-link">' . l(t('Order @order_id', array('@order_id' => $result['order_id'])), 'user/' . $result['uid'] . '/orders/' . $result['order_id']) . '</span>',
       '#weight' => 10,
     );
   }
@@ -1172,12 +1172,12 @@ function uc_node_checkout_load_order_product($order_product_id) {
   static $products = array();
 
   // If the product hasn't been searched before...
-  if (!isset($items[$nid])) {
+  if (!isset($products[$order_product_id])) {
     // Load the data from the database.
-    $result = db_query("SELECT * FROM {uc_order_products} WHERE order_product_id = %d", $order_product_id);
+    $query = db_query("SELECT * FROM {uc_order_products} WHERE order_product_id = :product_id", array(':product_id' => $order_product_id));
 
     // If a matching product was found in the DB for this node...
-    if ($product = db_fetch_object($result)) {
+    if ($product = $query->fetchObject()) {
       $product->data = unserialize($product->data);
       $products[$order_product_id] = $product;
     }
