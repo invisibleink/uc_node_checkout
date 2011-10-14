@@ -682,7 +682,11 @@ function uc_node_checkout_node_insert($node) {
     }
 
     // Build the preliminary add to cart data array.
-    $data = array('nid' => $product->nid, 'node_checkout_nid' => intval($node->nid));
+    $data = array(
+      'nid' => $product->nid,
+      'node_checkout_nid' => intval($node->nid),
+      'shippable' => $product->shippable,
+    );
 
     // Setup the extra values that will be passed around.
     $values = array(
