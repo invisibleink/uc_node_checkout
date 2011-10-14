@@ -677,7 +677,7 @@ function uc_node_checkout_node_insert($node) {
     }
 
     // Override the default qty. if specified.
-    if (intval($node->default_qty) > 0) {
+    if (isset($node->default_qty) && intval($node->default_qty) > 0) {
       $product->default_qty = intval($node->default_qty);
     }
 
