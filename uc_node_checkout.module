@@ -1039,7 +1039,7 @@ function uc_node_checkout_node_associated($node) {
   // Return TRUE if a product node has been associated to this node type.
   if (isset($node->type) &&
       $nc_map = uc_node_checkout_product_map($node->type)) {
-    if ($nc_map['nid'] || $nc_map['view']) {
+    if (!empty($nc_map['nid']) || !empty($nc_map['view'])) {
       return TRUE;
     }
   }
