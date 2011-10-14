@@ -802,8 +802,7 @@ function uc_node_checkout_node_delete($node) {
  */
 function uc_node_checkout_node_view($node, $view_mode, $langcode) {
   // Skip this whole block of code if this setting isn't enabled.
-  if (variable_get('uc_node_checkout_view_redirect', TRUE) &&
-      $arg4 === TRUE) {
+  if (variable_get('uc_node_checkout_view_redirect', TRUE) && $view_mode === 'full') {
     if (uc_node_checkout_node_associated($node) &&
         !user_access('edit any ' . $node->type . ' content') &&
         uc_node_checkout_load_cart_item($node->nid)) {
@@ -817,7 +816,7 @@ function uc_node_checkout_node_view($node, $view_mode, $langcode) {
 
   // Add any existing attribute text to the node on a full pageview.
   $show_attributes = variable_get('uc_node_checkout_show_original_attributes', TRUE);
-  if ($show_attributes && $arg4 === TRUE && !empty($node->uc_order_product_id)) {
+  if ($show_attributes && $view_mode === 'full' && !empty($node->uc_order_product_id)) {
     drupal_add_css(drupal_get_path('module', 'uc_node_checkout') . '/uc_node_checkout.css');
 
     // Load the product from the order.
