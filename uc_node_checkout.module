@@ -859,9 +859,8 @@ function uc_node_checkout_uc_cart_item($op, &$item) {
     case 'remove':
       // Delete the checkout node if setting calls for it
       if (variable_get('uc_node_checkout_delete_nodes', TRUE)) {
-        $data = unserialize($item->data);
-        if (isset($data['node_checkout_nid'])) {
-          node_delete($data['node_checkout_nid']);
+        if (isset($item->data['node_checkout_nid'])) {
+          node_delete($item->data['node_checkout_nid']);
         }
       }
       break;
