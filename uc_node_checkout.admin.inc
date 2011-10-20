@@ -192,24 +192,27 @@ function uc_node_checkout_type_form_submit($form, &$form_state) {
       ->execute();
   }
 
-  // Save the restricted fields settings.
-  $fields = array();
-
-  foreach ((array) $form_state['values']['restricted_fields'] as $key => $value) {
-    if ($value) {
-      $fields[] = $key;
-    }
-  }
-
-  if ($form_state['values']['disable_preview']) {
-    $fields[] = 'preview';
-  }
-
-  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_restrictions', $fields);
   variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_message', $form_state['values']['product_message']);
-  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderstatus', $form_state['values']['order_status']);
-  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderid', $form_state['values']['order_id']);
-  variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_productid', $form_state['values']['product_id']);
+
+  if (module_exists('content')) {
+    // Save the restricted fields settings.
+    $fields = array();
+
+    foreach ((array) $form_state['values']['restricted_fields'] as $key => $value) {
+      if ($value) {
+        $fields[] = $key;
+      }
+    }
+
+    if ($form_state['values']['disable_preview']) {
+      $fields[] = 'preview';
+    }
+
+    variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_restrictions', $fields);
+    variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderstatus', $form_state['values']['order_status']);
+    variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_orderid', $form_state['values']['order_id']);
+    variable_set('uc_node_checkout_' . $form_state['values']['type'] . '_field_productid', $form_state['values']['product_id']);
+  }
 
   $form_state['redirect'] = 'admin/store/settings/node-checkout';
 }
