@@ -435,7 +435,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             $_SESSION['node_checkout_redirect'] = array('node/add/' . str_replace('_', '-', $type), 'product_nid='.$product_nid);
             drupal_goto('user');
           }
-          else {
+          elseif (isset($_SESSION['node_checkout_redirect'])) {
             unset($_SESSION['node_checkout_redirect']);
           }
 
