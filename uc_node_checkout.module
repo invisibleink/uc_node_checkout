@@ -784,9 +784,6 @@ function uc_node_checkout_node_delete($node) {
       db_delete('uc_cart_products')
         ->condition('data', '%' . db_like('"node_checkout_nid";i:' . $node->nid . ';') . '%', 'LIKE')
         ->execute();
-      if (db_affected_rows()) {
-        // Display a message here if necessary.
-      }
     }
   }
   db_delete('uc_node_checkout_order_products')
