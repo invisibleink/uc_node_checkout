@@ -1309,6 +1309,8 @@ function theme_uc_node_cart_teaser($variables) {
  *   the node.
  */
 function theme_uc_node_checkout_node_attributes($variables) {
+  $option_rows = array();
+
   foreach ($variables['product']->data['attributes'] as $attribute => $option) {
     if (is_array($option)) {
       $option = implode(', ', $option);
