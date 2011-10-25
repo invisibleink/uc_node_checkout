@@ -308,8 +308,8 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         if (variable_get('uc_node_cart_teaser', TRUE)) {
           if (variable_get('uc_node_order_product_teaser_override', FALSE)) {
             $list = array(
-              token_replace(variable_get('uc_node_order_product_attribute', 'ID'), 'node', $node) . ': '
-              . token_replace(variable_get('uc_node_order_product_option', '[product:nid] - [product:title]'), 'node', $node),
+              token_replace(variable_get('uc_node_order_product_attribute', 'ID'), array('node' => $node)) . ': '
+              . token_replace(variable_get('uc_node_order_product_option', '[product:nid] - [product:title]'), array('node' => $node)),
             );
             $teaser = theme('item_list', $list, NULL, 'ul', array('class' => 'uc-node-cart-teaser'));
           }
@@ -966,15 +966,15 @@ function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
       // Skip the whole block of the teaser is not enabled.
       if (variable_get('uc_node_order_product_display', TRUE) && module_exists('uc_attribute')) {
         $attribute = variable_get('uc_node_order_product_attribute', 'ID');
-        $option = variable_get('uc_node_order_product_option', '[nid] - [title]');
+        $option = variable_get('uc_node_order_product_option', '[node:nid] - [node:title]');
 
         for ($i = 0, $j = count($arg1->products); $i < $j; $i++) {
           if (isset($arg1->products[$i]->data['node_checkout_nid'])) {
             $node = node_load($arg1->products[$i]->data['node_checkout_nid']);
 
             if ($node) {
-              $attr_value = html_entity_decode(token_replace($option, 'node', $node), ENT_QUOTES);
-              $attr_key = token_replace($attribute, 'node', $node);
+              $attr_value = html_entity_decode(token_replace($option, array('node' => $node)), ENT_QUOTES);
+              $attr_key = token_replace($attribute, array('node' => $node));
               $arg1->products[$i]->data['attributes'][$attr_key] = $attr_value;
 
               // Update the CCK fields

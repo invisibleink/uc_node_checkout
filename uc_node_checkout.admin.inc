@@ -348,8 +348,8 @@ function uc_node_checkout_settings_form() {
   $form['display_order']['uc_node_order_product_option'] = array(
     '#type' => 'textfield',
     '#title' => t('Order product option'),
-    '#description' => t('Specify a pattern for the option string; uses product tokens like [product:nid] and [product:title].'),
-    '#default_value' => variable_get('uc_node_order_product_option', '[product:nid] - [product:title]'),
+    '#description' => t('Specify a pattern for the option string; uses product tokens like [node:nid] and [node:title].'),
+    '#default_value' => variable_get('uc_node_order_product_option', '[node:nid] - [node:title]'),
   );
 
   // Display token help, if token module is installed
@@ -363,7 +363,7 @@ function uc_node_checkout_settings_form() {
     );
     $form['display_order']['tokens']['data'] = array(
       '#type' => 'markup',
-      '#markup' => '<div>' . theme('token_tree', array('token_types' => array('product'))) . '</div>',
+      '#markup' => '<div>' . theme('token_tree', array('token_types' => array('node'))) . '</div>',
     );
   }
 
