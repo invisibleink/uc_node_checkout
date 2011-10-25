@@ -1244,9 +1244,8 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
         }
       }
 
-      $output .= theme('item_list', array('items' => $items));
-
-      if (count($items)) {
+      if (!empty($items)) {
+        $output .= theme('item_list', array('items' => $items));
         return array('#markup' => $output);
       }
       else {
