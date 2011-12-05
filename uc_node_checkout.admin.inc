@@ -387,7 +387,7 @@ function uc_node_checkout_autocomplete($string = '') {
       ->where('LOWER(n.title) LIKE :title OR LOWER(p.model) LIKE :title', array(':title' => '%' . db_like(strtolower($string)) . '%'))
       ->range(0, 10);
     $result = $query->execute();
-    
+
     foreach ($result as $node) {
       $matches[$node->nid] = t('@title [@sku]', array('@title' => $node->title, '@sku' => $node->model));
     }
