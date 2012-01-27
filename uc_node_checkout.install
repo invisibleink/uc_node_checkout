@@ -11,27 +11,27 @@
  */
 function uc_node_checkout_schema() {
   $schema['uc_node_checkout_types'] = array(
-    'description' => t('Designates node types that, when created, will add a selected product into the shopping cart.'),
+    'description' => 'Designates node types that, when created, will add a selected product into the shopping cart.',
     'fields' => array(
       'node_type' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-        'description' => t('The {node}.type of the node the user can add; for example, "registration".'),
+        'description' => 'The {node}.type of the node the user can add; for example, "registration".',
       ),
       'product_nid' => array(
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-        'description' => t('The {node}.nid of the product node that will be placed in the shopping cart when the node_type node is added.'),
+        'description' => 'The {node}.nid of the product node that will be placed in the shopping cart when the node_type node is added.',
       ),
       'node_view' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-        'description' => t('The name of a view offering product selections that the user may choose to get added to their cart.'),
+        'description' => 'The name of a view offering product selections that the user may choose to get added to their cart.',
       ),
     ),
     'indexes' => array(
