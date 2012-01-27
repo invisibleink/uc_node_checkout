@@ -17,8 +17,8 @@ function uc_node_checkout_tk_values($type, $object = NULL, $options = array()) {
       $product = node_load($object->ucnc_product_nid);
     }
     else {
-      $order_product_id = db_result(db_query("SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = %d", $object->nid));
-      $nid = db_result(db_query("SELECT nid FROM {uc_order_products} WHERE order_product_id = %d", $order_product_id));
+      $order_product_id = db_query('SELECT order_product_id FROM {uc_node_checkout_order_products} WHERE nid = :nid', array(':nid' => $object->nid))->fetchField();
+      $nid = db_query('SELECT nid FROM {uc_order_products} WHERE order_product_id = :product_id', array(':product_id' => $order_product_id))->fetchField();
       $product = node_load($nid);
     }
     $tokens = array();

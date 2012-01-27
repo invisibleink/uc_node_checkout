@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * @file
  * Views integration for uc_node_checkout module.
  *
  * Creates a relationship between the created node and the associated order

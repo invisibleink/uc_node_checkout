@@ -67,7 +67,10 @@ function uc_node_checkout_schema() {
  */
 function uc_node_checkout_uninstall() {
   // Remove all module variables from the database
-  db_query("DELETE FROM {variable} WHERE name LIKE 'uc_node_checkout_%%'");
+  db_delete('variable')
+    ->condition('name', db_like('uc_node_checkout_') . '%', 'LIKE')
+    ->execute();
+  cache_clear_all('variables', 'cache_bootstrap');
 }
 
 
