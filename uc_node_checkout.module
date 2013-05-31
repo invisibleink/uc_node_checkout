@@ -831,12 +831,21 @@ function uc_node_checkout_node_view($node, $view_mode, $langcode) {
 
   // Link node to the corresponding order
   global $user;
-  if (isset($node->uc_order_product_id) && $node->uc_order_product_id && (user_access('view all orders') || (user_access('view own orders') && $node->uid == $user->uid))) {
-    $result = db_query('SELECT op.order_id, o.uid FROM {uc_order_products} op, {uc_orders} o WHERE op.order_product_id = :product_id AND o.order_id = op.order_id', array(':product_id' => $node->uc_order_product_id))->fetchAssoc();
-    $node->content['uc_node_checkout_order'] = array(
-      '#markup' => '<span class="uc-node-checkout-order-link">' . l(t('Order @order_id', array('@order_id' => $result['order_id'])), 'user/' . $result['uid'] . '/orders/' . $result['order_id']) . '</span>',
-      '#weight' => 10,
-    );
+  if (isset($node->uc_order_product_id) && $node->uc_order_product_id) {
+      $result = db_query('SELECT op.order_id, o.uid FROM {uc_order_products} op, {uc_orders} o WHERE op.order_product_id = :product_id AND o.order_id = op.order_id', array(':product_id' => $node->uc_order_product_id))->fetchAssoc();
+    if(user_access('view all orders')) {
+      $node->content['uc_node_checkout_order'] = array(
+        '#markup' => '<span class="uc-node-checkout-order-link">' . l(t('Order @order_id', array('@order_id' => $result['order_id'])), 'admin/store/orders/' . $result['order_id']) . '</span>',
+        '#weight' => 10,
+      );
+    } 
+    else if (user_access('view own orders') && $node->uid == $user->uid) {
+      $node->content['uc_node_checkout_order'] = array(
+        '#markup' => '<span class="uc-node-checkout-order-link">' . l(t('Order @order_id', array('@order_id' => $result['order_id'])), 'user/' . $result['uid'] . '/orders/' . $result['order_id']) . '</span>',
+        '#weight' => 10,
+      );
+    }
+
   }
 }
 
