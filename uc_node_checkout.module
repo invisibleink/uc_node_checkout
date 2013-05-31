@@ -387,7 +387,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
         // node has not already been checked out.
         if (module_exists('uc_attribute') && empty($form['#node']->uc_order_product_id)) {
           // Load up any attribute elements for this node's form.
-          $attributes = _uc_attribute_alter_form(node_load($product_nid));
+          $attributes = _uc_attribute_alter_form($product_nid, node_load($product_nid), FALSE);
 
           // If we got a result...
           if (!empty($attributes)) {
@@ -706,7 +706,7 @@ function uc_node_checkout_node_insert($node) {
     }
 
     // Pass these values to modules for alteration.
-    $extra = module_invoke_all('add_to_cart_data', $values);
+    $extra = module_invoke_all('uc_add_to_cart_data', $values);
 
     // Add to the add to cart data array based on the hook response.
     foreach ($extra as $key => $value) {
@@ -1131,24 +1131,28 @@ function uc_node_checkout_save_product_association($order_product_id, $nid) {
  *   An object representing the cart item or FALSE if none was found.
  */
 function uc_node_checkout_load_cart_item($nid) {
-  static $items = array();
+  $nc_items = &drupal_static(__FUNCTION__);
+  if (!isset($nc_items)) {
+    $nc_items = array();
+  }
 
   // If the item hasn't been searched before...
-  if (!isset($items[$nid])) {
+  if (!isset($nc_items[$nid])) {
     // Load the data from the database.
-    $result = db_query('SELECT * FROM {uc_cart_products} WHERE data LIKE :nid', array(':nid' => '%\"node_checkout_nid\";i:' . $nid . ';%'))->fetchField();
+    $result = db_select('uc_cart_products', 'ucp')
+         ->fields('ucp')
+         ->condition('data', '%"node_checkout_nid";i:' . $nid . ';%', 'LIKE')->execute();
 
     // If a matching product was found in the DB for this node...
     if ($item = $result->fetch()) {
       $item->data = unserialize($item->data);
-      $items[$nid] = $item;
+     $nc_items[$nid] = $item;
     }
     else {
-      $items[$nid] = FALSE;
+      $nc_items[$nid] = FALSE;
     }
   }
-
-  return $items[$nid];
+  return $nc_items[$nid];
 }
 
 
