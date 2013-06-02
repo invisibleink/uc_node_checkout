@@ -259,7 +259,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
   // links for the nodes they reference.
   if ($form_id == 'uc_cart_view_form') {
     $items = uc_cart_get_contents();
-    $i = 0;
+    $index = 0;
 
     // Check for any items being removed from the cart
     $deleted_items = array();
@@ -287,10 +287,10 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
               $title = l($item->title, 'node/' . $node->nid . '/edit', array('query' => array('destination' => 'cart')));
               $click = t('(click to edit)');
             }
-            else {
-              $title = $form['items'][$i]['title']['#markup'];
-              $click = ' - ' . l(t('edit'), 'node/' . $node->nid . '/edit', array('query' => array('destination' => 'cart')));
-            }
+//            else {
+//              $title = $form['items'][$i]['title']['#markup'];
+//              $click = ' - ' . l(t('edit'), 'node/' . $node->nid . '/edit', array('query' => array('destination' => 'cart')));
+//            }
 
             // Add the click to edit link to the title if necessary.
             if (variable_get('uc_node_checkout_click_to_edit', TRUE)) {
@@ -301,7 +301,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             $title = check_plain($item->title);
           }
 
-          $form['items'][$i]['title']['#markup'] = $title;
+          $form['items'][$index]['title']['#markup'] = $title;
         }
 
         // Add the node cart teaser beneath the title if necessary.
@@ -317,18 +317,18 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             $teaser = theme('uc_node_cart_teaser', array('node' => $node));
           }
 
-          $form['items'][$i]['description']['#markup'] .= $teaser;
+          $form['items'][$index]['description']['#markup'] .= $teaser;
         }
 
         // Rebuild the description from the title and options.
-        $form['items'][$i]['desc']['#markup'] = $form['items'][$i]['title']['#markup'] . $form['items'][$i]['description']['#markup'];
+        $form['items'][$index]['desc']['#markup'] = $form['items'][$index]['title']['#markup'] . $form['items'][$index]['description']['#markup'];
 
         // Seeing as the quantity is passsed in and should not be changed at this stage, disable.
-        $form['items'][$i]['qty']['#value'] = $form['items'][$i]['qty']['#default_value'];
-        $form['items'][$i]['qty']['#type'] = 'value';
-        $form['items'][$i]['qty']['#theme'] = 'uc_node_checkout_restrict_cart_qty_field';
+        $form['items'][$index]['qty']['#value'] = $form['items'][$index]['qty']['#default_value'];
+        $form['items'][$index]['qty']['#type'] = 'value';
+        $form['items'][$index]['qty']['#theme'] = 'uc_node_checkout_restrict_cart_qty_field';
       }
-      $i++;
+      $index++;
     }
   }
 
