@@ -273,8 +273,8 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
     // Update the item display (quantity, title, click to edit)
     foreach ($items as $i => $item) {
-      if (isset($item->checkout_node)) {
-        $node = $item->checkout_node;
+      if (isset($item->data['node_checkout_nid'])) {
+        $node = node_load($item->data['node_checkout_nid']);
 
         // Update the item being checked out
         uc_node_checkout_update_content_fields($item, $node);
