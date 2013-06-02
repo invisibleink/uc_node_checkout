@@ -284,7 +284,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
             variable_get('uc_node_checkout_click_to_edit', TRUE)) {
           if (!in_array($i, $deleted_items) && node_access('update', $node)) {
             if (variable_get('uc_node_checkout_cart_titles', TRUE)) {
-              $title = l($item->title, 'node/' . $node->nid . '/edit', array('query' => array('destination' => 'cart')));
+              $title = l($item->title, 'node/' . $node->nid . '/edit', array('query' => array('destination' => 'cart', 'product_nid' => $item->nid)));
               $click = t('(click to edit)');
             }
 //            else {
