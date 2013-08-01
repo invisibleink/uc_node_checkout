@@ -1267,11 +1267,13 @@ function uc_node_checkout_order_pane_nodes($op, $arg1) {
         // Create a row for customised products
         if ($has_association) {
           $node_checkout_node = node_load($product->data['node_checkout_nid']);
-          $items[] = l(t('@product_title (SKU @product_model) - @node_checkout_title',
-                         array('@product_title' => $product->title,
-                               '@product_model' => $product->model,
-                               '@node_checkout_title' => $node_checkout_node->title)),
-              'node/' . $node_checkout_node->nid, array('html' => TRUE));
+          if (is_object($node_checkout_node)) {
+            $items[] = l(t('@product_title (SKU @product_model) - @node_checkout_title',
+                           array('@product_title' => $product->title,
+                                 '@product_model' => $product->model,
+                                 '@node_checkout_title' => $node_checkout_node->title)),
+                'node/' . $node_checkout_node->nid, array('html' => TRUE));            
+          }
         }
 
         // Create a row for should-be customised products
