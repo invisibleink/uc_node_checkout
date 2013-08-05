@@ -980,6 +980,7 @@ function uc_node_checkout_update_content_fields($product, $node, $order = NULL) 
 function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
   dsm($op);
   dsm($arg1);
+  dsm($arg2);
   switch ($op) {
     // Save node to order product associations upon order submission.
     case 'submit':
