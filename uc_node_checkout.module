@@ -1025,7 +1025,7 @@ function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
 }
 
 function uc_node_checkout_uc_checkout_complete($order, $account) {
-  watchdog('uc_node_checkout', print_r($account));
+  watchdog('uc_node_checkout', ($order));
 }
 
 /**
