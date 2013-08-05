@@ -982,21 +982,6 @@ function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
   dsm($arg1);
   dsm($arg2);
   switch ($op) {
-    // Save node to order product associations upon order submission.
-    case 'submit':
-      // Loop through each product on the order.
-      foreach ($arg1->products as $product) {
-        // If it has a node checkout nid...
-        if (!empty($product->data['node_checkout_nid'])) {
-          // Save the association.
-          uc_node_checkout_save_product_association($product->order_product_id, $product->data['node_checkout_nid']);
-
-          // Update the post-save CCK fields
-          $node = node_load($product->data['node_checkout_nid']);
-          uc_node_checkout_update_content_fields($product, $node, $arg1);
-        }
-      }
-      break;
 
     // Add the node checkout teaser to products on order view screens.
     case 'load':
@@ -1020,8 +1005,22 @@ function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
           }
         }
       }
+    // Save node to order product associations upon order submission.
+    case 'submit':
+      // Loop through each product on the order.
+      foreach ($arg1->products as $product) {
+        // If it has a node checkout nid...
+        if (!empty($product->data['node_checkout_nid'])) {
+          // Save the association.
+          uc_node_checkout_save_product_association($product->order_product_id, $product->data['node_checkout_nid']);
+
+          // Update the post-save CCK fields
+          $node = node_load($product->data['node_checkout_nid']);
+          uc_node_checkout_update_content_fields($product, $node, $arg1);
+        }
+      }
       break;
-  }
+    }
 }
 
 function uc_node_checkout_uc_checkout_complete($order, $account) {
