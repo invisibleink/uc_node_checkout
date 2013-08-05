@@ -978,9 +978,6 @@ function uc_node_checkout_update_content_fields($product, $node, $order = NULL) 
  * Implements hook_uc_order().
  */
 function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
-  dsm($op);
-  dsm($arg1);
-  dsm($arg2);
   switch ($op) {
 
     // Add the node checkout teaser to products on order view screens.
@@ -1073,7 +1070,6 @@ function uc_node_checkout_node_associated($node) {
   if (isset($node->type) &&
       $nc_map = uc_node_checkout_product_map($node->type)) {
     if (!empty($nc_map['nid']) || !empty($nc_map['view'])) {
-  dpm($node, 'node_associated');
       return TRUE;
     }
   }
