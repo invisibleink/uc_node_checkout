@@ -853,15 +853,16 @@ function uc_node_checkout_node_view($node, $view_mode, $langcode) {
  * Implements hook_uc_cart_item_delete().
  */
 function uc_node_checkout_uc_cart_item_delete($entity) {
+	watchdog('debug', '<pre>entity: '. print_r($entity, TRUE) .'</pre>');
+	watchdog('debug', '<pre>session: '. print_r($_SESSION, TRUE) .'</pre>');
   //$entity is the cart item, the created node is in $entity['data']['node_checkout_nid];
   //first check if this is a node controlled by uc_node_checkout.
   if (isset($entity->data['node_checkout_nid'])) {
     // phew!  we're in the right place
     //now let's see how we got here. SORRY this is uber ugly, but this hook is firing when the order is completed too.
-    $session = $_SESSION;
-    $order = isset($session['cart_order'])? $session['cart_order'] : NULL;
-    $completed = ($order && ($session['uc_checkout'][$order]['do_complete']));
-    $rebuild = isset($session['uc_cart_order_rebuild']) ? TRUE : FALSE;
+    $order = isset($_SESSION['cart_order'])? $_SESSION['cart_order'] : NULL;
+    $completed = ($order && ($_SESSION['uc_checkout'][$order]['do_complete']));
+    $rebuild = isset($_SESSION['uc_cart_order_rebuild']) ? TRUE : FALSE;
       if ((!$completed || $rebuild) && (variable_get('uc_node_checkout_delete_nodes', TRUE))) {
         $node_checkout_nid = $entity->data['node_checkout_nid'];
         if (isset($node_checkout_nid)) {
@@ -1021,7 +1022,7 @@ function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
 }
 
 function uc_node_checkout_uc_checkout_complete($order, $account) {
-  watchdog('uc_node_checkout', '<pre>@order</pre>', array('@order'=>is_array($order)));
+	watchdog('debug', '<pre>order: '. print_r($order, TRUE) .'</pre>');
 }
 
 /**
