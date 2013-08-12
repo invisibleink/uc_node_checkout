@@ -860,10 +860,10 @@ function uc_node_checkout_uc_cart_item_delete($entity) {
   if (isset($entity->data['node_checkout_nid'])) {
     // phew!  we're in the right place
     //now let's see how we got here. SORRY this is uber ugly, but this hook is firing when the order is completed too.
-    $order = isset($_SESSION['cart_order'])? $_SESSION['cart_order'] : NULL;
-    $completed = ($order && ($_SESSION['uc_checkout'][$order]['do_complete']));
-    $rebuild = isset($_SESSION['uc_cart_order_rebuild']) ? TRUE : FALSE;
-      if ((!$completed || $rebuild) && (variable_get('uc_node_checkout_delete_nodes', TRUE))) {
+    // $order = isset($_SESSION['cart_order'])? $_SESSION['cart_order'] : NULL;
+    // $completed = ($order && ($_SESSION['uc_checkout'][$order]['do_complete']));
+    $rebuild = isset($_SESSION['uc_cart_order_rebuild']) ? $_SESSION['uc_cart_order_rebuild'] : FALSE;
+      if (($rebuild) && (variable_get('uc_node_checkout_delete_nodes', TRUE))) {
         $node_checkout_nid = $entity->data['node_checkout_nid'];
         if (isset($node_checkout_nid)) {
           $node = node_load($node_checkout_nid);
