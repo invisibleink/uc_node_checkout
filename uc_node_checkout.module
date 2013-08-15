@@ -961,23 +961,24 @@ function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
         $attribute = variable_get('uc_node_order_product_attribute', 'ID');
         $option = variable_get('uc_node_order_product_option', '[node:nid] - [node:title]');
 
-        for ($i = 0, $j = count($arg1->products); $i < $j; $i++) {
-          if (isset($arg1->products[$i]->data['node_checkout_nid'])) {
-            $node = node_load($arg1->products[$i]->data['node_checkout_nid']);
+        foreach ($arg1->products as $order_product_id => $product_object) {
+          if (isset($product_object->data['node_checkout_nid'])) {
+            $created_node = node_load($product_object->data['node_checkout_nid']);
 
-            if ($node) {
-              $attr_value = html_entity_decode(token_replace($option, array('node' => $node)), ENT_QUOTES);
-              $attr_key = token_replace($attribute, array('node' => $node));
-              $arg1->products[$i]->data['attributes'][$attr_key] = $attr_value;
+            if ($created_node) {
+              $attr_value = html_entity_decode(token_replace($option, array('node' => $created_node)), ENT_QUOTES);
+              $attr_key = token_replace($attribute, array('node' => $created_node));
+              $arg1->products[$order_product_id]->data['attributes'][$attr_key] = $attr_value;
 
               // Update the CCK fields
-              uc_node_checkout_update_content_fields($arg1->products[$i], $node, $arg1);
+              uc_node_checkout_update_content_fields($arg1->products[$order_product_id], $created_node, $arg1);
             }
           }
         }
       }
-    // Save node to order product associations upon order submission.
-    case 'submit':
+      break;
+    // Save node to order product associations upon order save.
+    case 'save':  
       // Loop through each product on the order.
       foreach ($arg1->products as $product) {
         // If it has a node checkout nid...
@@ -991,11 +992,25 @@ function uc_node_checkout_uc_order($op, &$arg1, $arg2) {
         }
       }
       break;
+    case 'update' :
+    // Remove old order products when one order completes.  This will keep abandoned orders from pointing to node_checkout nodes.
+      if ($arg2 == 'completed') {
+        foreach($arg1->products as $id => $product) {
+          $query = db_delete('uc_order_products')
+          ->condition('data', '%' . db_like('"node_checkout_nid";i:' . $product->data['node_checkout_nid'] . ';') . '%', 'LIKE')
+          ->condition('order_product_id',$id, '<>');
+          $delete = $query->execute();
+        }
+      }
+      break;
+    case 'delete': 
+    // TODO: Do we want to delete node checkout nodes when order is deleted?
+      break;
     }
 }
 
 function uc_node_checkout_uc_checkout_complete($order, $account) {
-	watchdog('debug', '<pre>order: '. print_r($order, TRUE) .'</pre>');
+  watchdog('debug', '<pre>order: '. print_r($order, TRUE) .'</pre>');
 }
 
 /**
