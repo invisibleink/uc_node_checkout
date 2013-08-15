@@ -385,7 +385,7 @@ function uc_node_checkout_form_alter(&$form, &$form_state, $form_id) {
 
         // If enabled, add attributes form to the top of the node form if the
         // node has not already been checked out.
-        if (module_exists('uc_attribute') && empty($form['#node']->uc_order_product_id)) {
+        if (module_exists('uc_attribute') && empty($form['#node']->uc_order_product_id) && !empty($product_nid)) {
           // Load up any attribute elements for this node's form.
           $attributes = _uc_attribute_alter_form($product_nid, node_load($product_nid), FALSE);
 
